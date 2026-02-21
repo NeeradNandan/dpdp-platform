@@ -28,42 +28,10 @@ export async function POST(request: NextRequest) {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    if (autoConfirm) {
-      const { data, error } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          organization_name: organizationName,
-          gstin: gstin || null,
-          industry,
-          org_size: orgSize,
-        },
-      });
-
-      if (error) {
-        if (error.message?.includes("already been registered")) {
-          return NextResponse.json(
-            { error: "An account with this email already exists." },
-            { status: 409 }
-          );
-        }
-        return NextResponse.json({ error: error.message }, { status: 400 });
-      }
-
-      return NextResponse.json({
-        message: "Account created successfully.",
-        autoConfirmed: true,
-        userId: data.user.id,
-      });
-    }
-
-    const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
     const { data, error } = await supabase.auth.admin.createUser({
       email,
       password,
-      email_confirm: false,
+      email_confirm: autoConfirm,
       user_metadata: {
         organization_name: organizationName,
         gstin: gstin || null,
@@ -82,14 +50,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    const { error: inviteError } = await supabase.auth.admin.generateLink({
-      type: "signup",
+    if (autoConfirm) {
+      return NextResponse.json({
+        message: "Account created successfully.",
+        autoConfirmed: true,
+        userId: data.user.id,
+      });
+    }
+
+    const origin =
+      request.headers.get("origin") ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
+
+    const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
       email,
-      password,
-      options: {
-        redirectTo: `${origin}/api/auth/callback`,
-      },
-    });
+      { redirectTo: `${origin}/api/auth/callback` }
+    );
 
     if (inviteError) {
       console.error("Failed to send confirmation email:", inviteError.message);
