@@ -16,6 +16,13 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 
+interface SignupResponse {
+  message?: string;
+  autoConfirmed?: boolean;
+  userId?: string;
+  error?: string;
+}
+
 const INDUSTRIES = [
   "Technology",
   "Healthcare",
@@ -41,6 +48,7 @@ export default function SignupPage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -88,32 +96,76 @@ export default function SignupPage() {
     }
 
     try {
-      const supabase = createClient();
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            organization_name: formData.organizationName,
-            gstin: formData.gstin || null,
-            industry: formData.industry,
-            org_size: formData.orgSize,
-          },
-        },
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          organizationName: formData.organizationName,
+          gstin: formData.gstin || null,
+          industry: formData.industry,
+          orgSize: formData.orgSize,
+        }),
       });
 
-      if (signUpError) {
-        setError(signUpError.message ?? "Sign up failed. Please try again.");
+      const data: SignupResponse = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Sign up failed. Please try again.");
         setLoading(false);
         return;
       }
 
-      router.push("/login?message=Account created. Please sign in.");
-      router.refresh();
+      if (data.autoConfirmed) {
+        const supabase = createClient();
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (signInError) {
+          router.push("/login?message=Account created. Please sign in.");
+          return;
+        }
+
+        router.push("/dashboard");
+        router.refresh();
+        return;
+      }
+
+      setSuccess(true);
+      setLoading(false);
     } catch {
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
     }
+  }
+
+  if (success) {
+    return (
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+            <Shield className="h-7 w-7 text-green-600" />
+          </div>
+          <CardTitle className="text-2xl">Check your email</CardTitle>
+          <CardDescription>
+            We sent a confirmation link to <strong>{formData.email}</strong>.
+            Click the link to activate your account, then sign in.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="flex flex-col gap-4">
+          <Button
+            className="w-full"
+            variant="default"
+            onClick={() => router.push("/login")}
+          >
+            Go to Sign In
+          </Button>
+        </CardFooter>
+      </Card>
+    );
   }
 
   return (
