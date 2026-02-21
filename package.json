@@ -4,11 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:e0": "supabase start && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
     "test:ci": "jest --ci --coverage --forceExit",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:studio": "open http://127.0.0.1:54323",
     "prepare": "husky"
   },
   "dependencies": {
