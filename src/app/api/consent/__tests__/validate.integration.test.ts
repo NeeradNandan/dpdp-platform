@@ -27,9 +27,10 @@ function mockChain(table: string) {
     filters: Array<{ col: string; val: unknown }>;
   } = { table, filters: [] };
 
-  const chain: Record<string, (...args: unknown[]) => unknown> = {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const chain: Record<string, any> = {
     select() { return chain; },
-    eq(col: string, val: unknown) {
+    eq(col: any, val: any) {
       ctx.filters.push({ col, val });
       return chain;
     },
@@ -43,7 +44,7 @@ function mockChain(table: string) {
     },
   };
 
-  chain.then = (resolve: (v: unknown) => void) => {
+  chain.then = (resolve: any) => {
     const src = ctx.table === "consent_purposes" ? purposeRows : consentRows;
     let result = src;
     for (const f of ctx.filters) {
@@ -51,6 +52,7 @@ function mockChain(table: string) {
     }
     return resolve({ data: result, error: null });
   };
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   return chain;
 }

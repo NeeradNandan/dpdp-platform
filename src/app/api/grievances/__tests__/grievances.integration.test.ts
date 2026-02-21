@@ -34,15 +34,16 @@ function mockChain(table: string) {
     ascending: false,
   };
 
-  const chain: Record<string, (...args: unknown[]) => unknown> = {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const chain: Record<string, any> = {
     select() { return chain; },
-    eq(col: string, val: unknown) {
+    eq(col: any, val: any) {
       ctx.filters.push({ col, val });
       return chain;
     },
     limit() { return chain; },
     order() { return chain; },
-    insert(data: Row) {
+    insert(data: any) {
       ctx.insertData = data;
       return chain;
     },
@@ -50,10 +51,10 @@ function mockChain(table: string) {
       if (ctx.insertData) {
         const now = new Date().toISOString();
         const newRow = {
-          id: `id-${Date.now()}-${Math.random()}`,
+          ...ctx.insertData,
+          id: ctx.insertData.id ?? `id-${Date.now()}-${Math.random()}`,
           created_at: now,
           updated_at: now,
-          ...ctx.insertData,
         };
         rows.push(newRow);
         return { data: newRow, error: null };
@@ -79,10 +80,10 @@ function mockChain(table: string) {
     if (ctx.insertData) {
       const now = new Date().toISOString();
       const newRow = {
-        id: `id-${Date.now()}-${Math.random()}`,
+        ...ctx.insertData,
+        id: ctx.insertData.id ?? `id-${Date.now()}-${Math.random()}`,
         created_at: now,
         updated_at: now,
-        ...ctx.insertData,
       };
       rows.push(newRow);
       return { data: [newRow], error: null };
@@ -90,7 +91,8 @@ function mockChain(table: string) {
     return { data: filtered(), error: null };
   };
 
-  chain.then = (resolve: (v: unknown) => void) => resolve(thenHandler());
+  chain.then = (resolve: any) => resolve(thenHandler());
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   return chain;
 }

@@ -40,20 +40,21 @@ function mockChain(table: string) {
     countMode: false,
   };
 
-  const chain: Record<string, (...args: unknown[]) => unknown> = {
-    select(_cols?: string, opts?: { count?: string; head?: boolean }) {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const chain: Record<string, any> = {
+    select(_cols?: any, opts?: any) {
       if (opts?.count) ctx.countMode = true;
       return chain;
     },
-    eq(col: string, val: unknown) {
+    eq(col: any, val: any) {
       ctx.filters.push({ col, val });
       return chain;
     },
-    insert(data: Row) {
+    insert(data: any) {
       ctx.insertData = data;
       return chain;
     },
-    range(start: number, end: number) {
+    range(start: any, end: any) {
       ctx.rangeStart = start;
       ctx.rangeEnd = end;
       return resolve();
@@ -62,6 +63,7 @@ function mockChain(table: string) {
       return resolveOne();
     },
   };
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   function getSource(): Row[] {
     return ctx.table === "consent_purposes" ? purposes : rows;
@@ -77,7 +79,7 @@ function mockChain(table: string) {
 
   function resolve() {
     if (ctx.insertData) {
-      const newRow = { id: `id-${Date.now()}-${Math.random()}`, ...ctx.insertData };
+      const newRow = { ...ctx.insertData, id: ctx.insertData.id ?? `id-${Date.now()}-${Math.random()}` };
       if (ctx.table === "consent_purposes") purposes.push(newRow);
       else rows.push(newRow);
       const sliced = [newRow];
@@ -90,7 +92,7 @@ function mockChain(table: string) {
 
   function resolveOne() {
     if (ctx.insertData) {
-      const newRow = { id: `id-${Date.now()}-${Math.random()}`, ...ctx.insertData };
+      const newRow = { ...ctx.insertData, id: ctx.insertData.id ?? `id-${Date.now()}-${Math.random()}` };
       if (ctx.table === "consent_purposes") purposes.push(newRow);
       else rows.push(newRow);
       return { data: newRow, error: null };
