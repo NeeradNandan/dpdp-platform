@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 const SITE_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://yojak.ai";
+  process.env.NEXT_PUBLIC_APP_URL || "https://yojak.ai";
 
 export default function PolicyGeneratorLayout({
   children,

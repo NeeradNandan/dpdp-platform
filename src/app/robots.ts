@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://yojak.ai";
+  process.env.NEXT_PUBLIC_APP_URL || "https://yojak.ai";
 
 export default function robots(): MetadataRoute.Robots {
   return {

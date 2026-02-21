@@ -3,7 +3,7 @@ import { Shield } from "lucide-react";
 import { JsonLd } from "@/components/seo/json-ld";
 
 const SITE_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://yojak.ai";
+  process.env.NEXT_PUBLIC_APP_URL || "https://yojak.ai";
 
 const organizationSchema = {
   "@context": "https://schema.org",
