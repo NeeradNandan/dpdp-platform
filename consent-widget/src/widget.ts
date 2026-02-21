@@ -1,5 +1,5 @@
 /**
- * DPDP Shield Consent Banner Widget
+ * Yojak Consent Banner Widget
  * Lightweight, embeddable consent management for DPDP Act compliance
  * Vanilla TypeScript - no framework dependencies
  */
@@ -324,8 +324,6 @@ export function createWidget(config: DPDPConfig) {
     if (bannerEl && document.body.contains(bannerEl)) return;
     state = getInitialState();
     injectStyles(config);
-
-    const isTop = (config.position || 'bottom') === 'top';
 
     backdropEl = document.createElement('div');
     backdropEl.className = `${PREFIX}backdrop`;

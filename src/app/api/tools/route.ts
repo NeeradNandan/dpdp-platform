@@ -292,7 +292,7 @@ export async function POST(request: NextRequest) {
         );
       if (recommendations.length < 3) {
         recommendations.push(
-          "Consider automated compliance monitoring with DPDP Shield"
+          "Consider automated compliance monitoring with Yojak"
         );
         recommendations.push("Schedule regular compliance audits");
       }

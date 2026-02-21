@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Copy, RefreshCw } from "lucide-react";
 import {
   Card,
@@ -11,19 +11,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
+import { useOrg } from "@/hooks/use-org";
 import type { Organization } from "@/types";
 
-const MOCK_ORG: Organization = {
-  id: "org-1",
-  name: "Acme Technologies Pvt Ltd",
-  gstin: "29AABCT1234M1Z5",
-  industry: "Technology / SaaS",
-  size: "medium",
-  created_at: "2024-06-01T00:00:00Z",
-  updated_at: "2025-02-21T00:00:00Z",
-};
-
-const MOCK_API_KEY = "dpdp_key_placeholder_replace_me";
+const PLACEHOLDER_API_KEY = "yojak_key_placeholder";
 
 const POSITION_OPTIONS = [
   "bottom-left",
@@ -41,6 +33,8 @@ const LANGUAGE_OPTIONS = [
 ];
 
 export default function SettingsPage() {
+  const { orgId, loading: orgLoading } = useOrg();
+  const [org, setOrg] = useState<Organization | null>(null);
   const [primaryColor, setPrimaryColor] = useState("#6366f1");
   const [position, setPosition] = useState<(typeof POSITION_OPTIONS)[number]>(
     "bottom-right"
@@ -56,6 +50,19 @@ export default function SettingsPage() {
   const [autoDelete, setAutoDelete] = useState(true);
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    if (orgLoading || !orgId) return;
+    const supabase = createClient();
+    supabase
+      .from("organizations")
+      .select("*")
+      .eq("id", orgId)
+      .single()
+      .then(({ data }) => {
+        if (data) setOrg(data as Organization);
+      });
+  }, [orgId, orgLoading]);
+
   const toggleLanguage = (id: string) => {
     setLanguages((prev) =>
       prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id]
@@ -63,12 +70,20 @@ export default function SettingsPage() {
   };
 
   const copyApiKey = () => {
-    navigator.clipboard.writeText(MOCK_API_KEY);
+    navigator.clipboard.writeText(PLACEHOLDER_API_KEY);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const widgetSnippet = `<script src="https://cdn.dpdpshield.com/widget.js" data-org-id="${MOCK_ORG.id}" data-color="${primaryColor}" data-position="${position}" data-languages="${languages.join(",")}"></script>`;
+  if (orgLoading || !org) {
+    return (
+      <div className="flex h-64 items-center justify-center text-slate-500">
+        Loading settings...
+      </div>
+    );
+  }
+
+  const widgetSnippet = `<script src="https://cdn.yojak.ai/widget.js" data-org-id="${org.id}" data-color="${primaryColor}" data-position="${position}" data-languages="${languages.join(",")}"></script>`;
 
   return (
     <div className="space-y-6">
@@ -83,25 +98,25 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <Input
             label="Organization Name"
-            value={MOCK_ORG.name}
+            value={org.name}
             readOnly
             className="bg-gray-50"
           />
           <Input
             label="GSTIN"
-            value={MOCK_ORG.gstin}
+            value={org.gstin ?? "Not provided"}
             readOnly
             className="bg-gray-50"
           />
           <Input
             label="Industry"
-            value={MOCK_ORG.industry}
+            value={org.industry}
             readOnly
             className="bg-gray-50"
           />
           <Input
             label="Organization Size"
-            value={MOCK_ORG.size}
+            value={org.size}
             readOnly
             className="bg-gray-50 capitalize"
           />

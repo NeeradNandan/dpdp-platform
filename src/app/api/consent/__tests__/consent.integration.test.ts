@@ -3,18 +3,120 @@
  *
  * Integration tests for /api/consent
  * Tests the full consent lifecycle: create, list, filter, pagination.
+ * Mocks the Supabase admin client.
  */
 import { NextRequest } from "next/server";
 import { GET, POST } from "../route";
-import { consentStore, purposeStore } from "@/lib/consent-store";
 
-function makeRequest(url: string, init?: { method?: string; body?: string; headers?: Record<string, string> }): NextRequest {
+interface Row {
+  id: string;
+  [key: string]: unknown;
+}
+
+let rows: Row[] = [];
+let purposes: Row[] = [];
+
+function resetStore() {
+  rows = [];
+  purposes = [];
+}
+
+function mockChain(table: string) {
+  const ctx: {
+    table: string;
+    filters: Array<{ col: string; val: unknown }>;
+    insertData: Row | null;
+    rangeStart: number;
+    rangeEnd: number;
+    selectMode: string;
+    countMode: boolean;
+  } = {
+    table,
+    filters: [],
+    insertData: null,
+    rangeStart: 0,
+    rangeEnd: 999,
+    selectMode: "*",
+    countMode: false,
+  };
+
+  const chain: Record<string, (...args: unknown[]) => unknown> = {
+    select(_cols?: string, opts?: { count?: string; head?: boolean }) {
+      if (opts?.count) ctx.countMode = true;
+      return chain;
+    },
+    eq(col: string, val: unknown) {
+      ctx.filters.push({ col, val });
+      return chain;
+    },
+    insert(data: Row) {
+      ctx.insertData = data;
+      return chain;
+    },
+    range(start: number, end: number) {
+      ctx.rangeStart = start;
+      ctx.rangeEnd = end;
+      return resolve();
+    },
+    single() {
+      return resolveOne();
+    },
+  };
+
+  function getSource(): Row[] {
+    return ctx.table === "consent_purposes" ? purposes : rows;
+  }
+
+  function filtered(): Row[] {
+    let result = getSource();
+    for (const f of ctx.filters) {
+      result = result.filter((r) => r[f.col] === f.val);
+    }
+    return result;
+  }
+
+  function resolve() {
+    if (ctx.insertData) {
+      const newRow = { id: `id-${Date.now()}-${Math.random()}`, ...ctx.insertData };
+      if (ctx.table === "consent_purposes") purposes.push(newRow);
+      else rows.push(newRow);
+      const sliced = [newRow];
+      return { data: sliced, count: sliced.length, error: null };
+    }
+    const all = filtered();
+    const sliced = all.slice(ctx.rangeStart, ctx.rangeEnd + 1);
+    return { data: sliced, count: all.length, error: null };
+  }
+
+  function resolveOne() {
+    if (ctx.insertData) {
+      const newRow = { id: `id-${Date.now()}-${Math.random()}`, ...ctx.insertData };
+      if (ctx.table === "consent_purposes") purposes.push(newRow);
+      else rows.push(newRow);
+      return { data: newRow, error: null };
+    }
+    const all = filtered();
+    return { data: all[0] ?? null, error: null };
+  }
+
+  return chain;
+}
+
+jest.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({
+    from: (table: string) => mockChain(table),
+  }),
+}));
+
+function makeRequest(
+  url: string,
+  init?: { method?: string; body?: string; headers?: Record<string, string> },
+): NextRequest {
   return new NextRequest(new URL(url, "http://localhost:3000"), init);
 }
 
 beforeEach(() => {
-  consentStore.clear();
-  purposeStore.clear();
+  resetStore();
 });
 
 describe("POST /api/consent", () => {
@@ -87,17 +189,14 @@ describe("POST /api/consent", () => {
     expect(new Date(data.expires_at).getTime()).toBeGreaterThan(Date.now());
   });
 
-  it("uses purpose title from store if available", async () => {
-    purposeStore.set("purpose-analytics", {
+  it("uses purpose title from Supabase if available", async () => {
+    purposes.push({
       id: "purpose-analytics",
       org_id: "org_default_001",
       code: "ANALYTICS",
       title: "Website Analytics",
       description: "Track usage patterns",
-      legal_basis: "consent",
       retention_period_days: 180,
-      is_mandatory: false,
-      created_at: new Date().toISOString(),
     });
 
     const req = makeRequest("http://localhost:3000/api/consent", {
@@ -152,7 +251,9 @@ describe("GET /api/consent", () => {
   it("filters by status", async () => {
     await seedConsent();
 
-    const req = makeRequest("http://localhost:3000/api/consent?status=withdrawn");
+    const req = makeRequest(
+      "http://localhost:3000/api/consent?status=withdrawn",
+    );
     const res = await GET(req);
     const data = await res.json();
 
@@ -164,7 +265,9 @@ describe("GET /api/consent", () => {
       await seedConsent({ data_principal_id: `user-${i}` });
     }
 
-    const req = makeRequest("http://localhost:3000/api/consent?page=2&limit=2");
+    const req = makeRequest(
+      "http://localhost:3000/api/consent?page=2&limit=2",
+    );
     const res = await GET(req);
     const data = await res.json();
 

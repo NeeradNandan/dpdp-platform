@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
   CardContent,
-  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -202,18 +201,9 @@ export default function ReadinessScorePage() {
       recommendations.push("Verify parental consent and restrict tracking for minors");
 
     if (recommendations.length < 3) {
-      recommendations.push("Consider automated compliance monitoring with DPDP Shield");
+      recommendations.push("Consider automated compliance monitoring with Yojak");
       recommendations.push("Schedule regular compliance audits");
     }
-
-    const penaltyMap: Record<string, number> = {
-      "0-49": 250,
-      "50-79": 50,
-      "80-100": 10,
-    };
-    const penaltyKey =
-      overall >= 80 ? "80-100" : overall >= 50 ? "50-79" : "0-49";
-    const penaltyEstimate = penaltyMap[penaltyKey];
 
     try {
       const res = await fetch("/api/tools", {

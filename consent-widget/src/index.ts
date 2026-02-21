@@ -1,5 +1,5 @@
 /**
- * DPDP Shield Consent Widget - Entry Point
+ * Yojak Consent Widget - Entry Point
  * Auto-initializes from window.__DPDP_CONFIG__ or script tag data attributes
  */
 
@@ -8,7 +8,7 @@ import { createWidget, type DPDPConfig } from './widget';
 declare global {
   interface Window {
     __DPDP_CONFIG__?: Partial<DPDPConfig>;
-    DPDPShield?: ReturnType<typeof createWidget>;
+    Yojak?: ReturnType<typeof createWidget>;
   }
 }
 
@@ -36,7 +36,7 @@ function mergeConfig(): DPDPConfig | null {
 
   const orgId = globalConfig?.orgId ?? scriptConfig.orgId ?? '';
   if (!orgId) {
-    console.warn('[DPDP Shield] orgId is required. Set data-org-id on the script tag or window.__DPDP_CONFIG__.orgId');
+    console.warn('[Yojak] orgId is required. Set data-org-id on the script tag or window.__DPDP_CONFIG__.orgId');
     return null;
   }
 
@@ -57,7 +57,7 @@ function init(): void {
 
   const widget = createWidget(config);
   if (typeof window !== 'undefined') {
-    window.DPDPShield = widget;
+    window.Yojak = widget;
   }
 }
 

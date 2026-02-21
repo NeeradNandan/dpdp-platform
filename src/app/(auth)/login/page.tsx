@@ -55,7 +55,7 @@ export default function LoginPage() {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100">
           <Shield className="h-7 w-7 text-indigo-600" />
         </div>
-        <CardTitle className="text-2xl">DPDP Shield</CardTitle>
+        <CardTitle className="text-2xl">Yojak</CardTitle>
         <CardDescription>Sign in to your account</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>

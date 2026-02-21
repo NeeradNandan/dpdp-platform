@@ -1,5 +1,5 @@
 {
-  "name": "@dpdp-shield/consent-widget",
+  "name": "@yojak/consent-widget",
   "version": "1.0.0",
   "description": "DPDP Act compliant consent banner widget",
   "main": "dist/widget.js",

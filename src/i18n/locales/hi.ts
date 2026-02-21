@@ -63,7 +63,7 @@ const hi = {
     filter: "फ़िल्टर",
     export: "निर्यात",
     days: "दिन",
-    powered_by: "DPDP Shield द्वारा संचालित",
+    powered_by: "Yojak द्वारा संचालित",
   },
 } as const;
 

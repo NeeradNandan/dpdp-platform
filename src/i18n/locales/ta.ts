@@ -63,7 +63,7 @@ const ta = {
     filter: "வடிகட்டு",
     export: "ஏற்றுமதி",
     days: "நாட்கள்",
-    powered_by: "DPDP Shield மூலம் இயக்கப்படுகிறது",
+    powered_by: "Yojak மூலம் இயக்கப்படுகிறது",
   },
 } as const;
 

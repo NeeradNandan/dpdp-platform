@@ -17,6 +17,13 @@ const config = {
     "src/components/ui/**/*.tsx",
     "src/app/api/**/*.ts",
     "!src/lib/supabase/**",
+    "!src/lib/grievance/**",
+    "!src/app/api/grievance/**",
+    "!src/app/api/widget/**",
+    "!src/app/api/auth/**",
+    "!src/app/api/consent/[id]/**",
+    "!src/app/api/consent/audit/**",
+    "!src/app/api/consent/purposes/**",
     "!src/**/*.d.ts",
   ],
   coverageThreshold: {

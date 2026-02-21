@@ -12,10 +12,77 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://yojak.ai";
+
 export const metadata: Metadata = {
-  title: "DPDP Shield | Privacy-as-a-Service Compliance Platform",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Yojak — Compliance, Connected.",
+    template: "%s | Yojak",
+  },
   description:
-    "Automated DPDP Act compliance for Indian businesses. Consent management, data mapping, grievance redressal, and readiness scoring.",
+    "Automated DPDP Act 2023 compliance for Indian businesses. Consent management, data mapping, AI grievance redressal, readiness scoring, and 22 Indian language support. Starting at Rs 999/month.",
+  keywords: [
+    "Yojak",
+    "DPDP Act",
+    "DPDP compliance",
+    "Digital Personal Data Protection Act",
+    "data privacy India",
+    "consent management",
+    "data mapping",
+    "grievance redressal",
+    "PII discovery",
+    "privacy policy generator",
+    "DPDP readiness score",
+    "cookie scanner India",
+    "MSME compliance",
+    "Data Protection Board India",
+    "consent manager India",
+    "privacy as a service",
+    "RegTech India",
+  ],
+  authors: [{ name: "Yojak" }],
+  creator: "Yojak",
+  publisher: "Yojak",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    url: SITE_URL,
+    siteName: "Yojak",
+    title: "Yojak — Automated DPDP Act Compliance for Indian Businesses",
+    description:
+      "Protect your business from penalties up to Rs 250 crore. Automated consent management, PII data mapping, AI grievance redressal, and 22 Indian language support.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Yojak — Compliance, Connected.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Yojak — Compliance, Connected.",
+    description:
+      "Consent management, data mapping, and grievance redressal for Indian businesses. Compliant with DPDP Act 2023.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  category: "technology",
 };
 
 export default function RootLayout({
@@ -25,6 +92,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-readable site description" />
+        <link rel="alternate" type="text/plain" href="/llms-full.txt" title="LLM-readable full documentation" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

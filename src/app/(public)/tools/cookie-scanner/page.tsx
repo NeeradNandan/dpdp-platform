@@ -46,7 +46,6 @@ export default function CookieScannerPage() {
     setResults(null);
     setProgressStep(0);
 
-    const steps = ["scanning...", "analyzing...", "generating report..."];
     for (let i = 0; i < 3; i++) {
       setProgressStep(i + 1);
       await new Promise((r) => setTimeout(r, 1000));
@@ -234,7 +233,7 @@ export default function CookieScannerPage() {
             <CardFooter>
               <Link href="/signup" className="w-full">
                 <Button className="w-full" size="lg">
-                  Fix these issues automatically with DPDP Shield
+                  Fix these issues automatically with Yojak
                 </Button>
               </Link>
             </CardFooter>

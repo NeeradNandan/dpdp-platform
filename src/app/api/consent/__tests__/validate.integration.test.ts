@@ -3,18 +3,73 @@
  *
  * Integration tests for /api/consent/validate
  * Tests real-time consent validation per MeitY BRD.
+ * Mocks the Supabase admin client.
  */
 import { NextRequest } from "next/server";
 import { POST } from "../validate/route";
-import { POST as createConsent } from "../route";
-import { consentStore } from "@/lib/consent-store";
 
-function makeRequest(url: string, init?: { method?: string; body?: string }): NextRequest {
+interface Row {
+  id: string;
+  [key: string]: unknown;
+}
+
+let consentRows: Row[] = [];
+let purposeRows: Row[] = [];
+
+function resetStore() {
+  consentRows = [];
+  purposeRows = [];
+}
+
+function mockChain(table: string) {
+  const ctx: {
+    table: string;
+    filters: Array<{ col: string; val: unknown }>;
+  } = { table, filters: [] };
+
+  const chain: Record<string, (...args: unknown[]) => unknown> = {
+    select() { return chain; },
+    eq(col: string, val: unknown) {
+      ctx.filters.push({ col, val });
+      return chain;
+    },
+    single() {
+      const src = ctx.table === "consent_purposes" ? purposeRows : consentRows;
+      let result = src;
+      for (const f of ctx.filters) {
+        result = result.filter((r) => r[f.col] === f.val);
+      }
+      return { data: result[0] ?? null, error: null };
+    },
+  };
+
+  chain.then = (resolve: (v: unknown) => void) => {
+    const src = ctx.table === "consent_purposes" ? purposeRows : consentRows;
+    let result = src;
+    for (const f of ctx.filters) {
+      result = result.filter((r) => r[f.col] === f.val);
+    }
+    return resolve({ data: result, error: null });
+  };
+
+  return chain;
+}
+
+jest.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({
+    from: (table: string) => mockChain(table),
+  }),
+}));
+
+function makeRequest(
+  url: string,
+  init?: { method?: string; body?: string },
+): NextRequest {
   return new NextRequest(new URL(url, "http://localhost:3000"), init);
 }
 
 beforeEach(() => {
-  consentStore.clear();
+  resetStore();
 });
 
 describe("POST /api/consent/validate", () => {
@@ -33,16 +88,18 @@ describe("POST /api/consent/validate", () => {
   });
 
   it("returns valid=true when active consent exists", async () => {
-    const createReq = makeRequest("http://localhost:3000/api/consent", {
-      method: "POST",
-      body: JSON.stringify({
-        data_principal_id: "user-1",
-        purpose_id: "p-1",
-        consent_method: "explicit_click",
-        session_id: "sess-1",
-      }),
+    const future = new Date();
+    future.setDate(future.getDate() + 365);
+
+    consentRows.push({
+      id: "consent-1",
+      org_id: "org_default_001",
+      data_principal_id: "user-1",
+      purpose_id: "p-1",
+      consent_status: "active",
+      purpose_description: "Analytics",
+      expires_at: future.toISOString(),
     });
-    await createConsent(createReq);
 
     const req = makeRequest("http://localhost:3000/api/consent/validate", {
       method: "POST",
@@ -55,7 +112,33 @@ describe("POST /api/consent/validate", () => {
     const res = await POST(req);
     const data = await res.json();
     expect(data.valid).toBe(true);
-    expect(data.consent_id).toBeDefined();
+    expect(data.consent_id).toBe("consent-1");
+  });
+
+  it("returns valid=false for expired consent", async () => {
+    const past = new Date();
+    past.setDate(past.getDate() - 10);
+
+    consentRows.push({
+      id: "consent-expired",
+      org_id: "org_default_001",
+      data_principal_id: "user-2",
+      purpose_id: "p-2",
+      consent_status: "active",
+      expires_at: past.toISOString(),
+    });
+
+    const req = makeRequest("http://localhost:3000/api/consent/validate", {
+      method: "POST",
+      body: JSON.stringify({
+        data_principal_id: "user-2",
+        purpose_id: "p-2",
+      }),
+    });
+
+    const res = await POST(req);
+    const data = await res.json();
+    expect(data.valid).toBe(false);
   });
 
   it("returns 400 for missing data_principal_id", async () => {

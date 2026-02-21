@@ -17,12 +17,12 @@ export default function PublicLayout({
             <div className="flex items-center gap-2">
               <Shield className="h-6 w-6 text-indigo-400" />
               <span className="text-lg font-semibold text-white">
-                DPDP Shield
+                Yojak
               </span>
             </div>
             <p className="text-center text-sm text-slate-400 md:text-left">
-              Privacy-as-a-Service Compliance Platform. Automated DPDP Act
-              compliance for Indian businesses.
+              Compliance, Connected. Automated DPDP Act compliance for Indian
+              businesses.
             </p>
             <div className="flex gap-6">
               <Link
@@ -40,7 +40,7 @@ export default function PublicLayout({
             </div>
           </div>
           <p className="mt-8 text-center text-xs text-slate-500">
-            © {new Date().getFullYear()} DPDP Shield. All rights reserved.
+            © {new Date().getFullYear()} Yojak. All rights reserved.
           </p>
         </div>
       </footer>

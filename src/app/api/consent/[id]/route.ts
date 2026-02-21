@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  consentStore,
-  addAuditEntry,
-  DEFAULT_ORG_ID,
-} from "@/lib/consent-store";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { CORS_HEADERS } from "@/lib/cors";
+
+const DEFAULT_ORG_ID = "org_default_001";
 
 function getOrgId(request: NextRequest): string {
   return request.headers.get("x-org-id") ?? DEFAULT_ORG_ID;
@@ -17,10 +15,6 @@ function errorResponse(error: string, status: number, details?: string) {
   );
 }
 
-/**
- * GET /api/consent/[id]
- * Get a single consent record by ID.
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -28,12 +22,16 @@ export async function GET(
   try {
     const { id } = await params;
     const orgId = getOrgId(request);
+    const supabase = createAdminClient();
 
-    const consent = consentStore.get(id);
-    if (!consent) {
-      return errorResponse("Consent not found", 404);
-    }
-    if (consent.org_id !== orgId) {
+    const { data: consent, error } = await supabase
+      .from("consent_records")
+      .select("*")
+      .eq("id", id)
+      .eq("org_id", orgId)
+      .single();
+
+    if (error || !consent) {
       return errorResponse("Consent not found", 404);
     }
 
@@ -51,10 +49,6 @@ interface PatchBody {
   action: "withdraw" | "renew";
 }
 
-/**
- * PATCH /api/consent/[id]
- * Update consent (withdraw or renew).
- */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -62,12 +56,16 @@ export async function PATCH(
   try {
     const { id } = await params;
     const orgId = getOrgId(request);
+    const supabase = createAdminClient();
 
-    const consent = consentStore.get(id);
-    if (!consent) {
-      return errorResponse("Consent not found", 404);
-    }
-    if (consent.org_id !== orgId) {
+    const { data: consent, error: fetchError } = await supabase
+      .from("consent_records")
+      .select("*")
+      .eq("id", id)
+      .eq("org_id", orgId)
+      .single();
+
+    if (fetchError || !consent) {
       return errorResponse("Consent not found", 404);
     }
 
@@ -92,40 +90,51 @@ export async function PATCH(
       if (consent.consent_status === "withdrawn") {
         return errorResponse("Consent is already withdrawn", 400);
       }
-      consent.consent_status = "withdrawn";
-      consent.withdrawn_at = now;
 
-      addAuditEntry({
-        event_type: "withdrawn",
-        consent_id: id,
-        data_principal_id: consent.data_principal_id,
-        purpose_id: consent.purpose_id,
-        timestamp: now,
-        ip_address: consent.ip_address,
-        user_agent: consent.user_agent,
-      });
+      const { data: updated, error: updateError } = await supabase
+        .from("consent_records")
+        .update({ consent_status: "withdrawn", withdrawn_at: now })
+        .eq("id", id)
+        .eq("org_id", orgId)
+        .select()
+        .single();
+
+      if (updateError) {
+        return errorResponse(
+          "Failed to update consent",
+          500,
+          updateError.message
+        );
+      }
+
+      return NextResponse.json(updated, { headers: CORS_HEADERS });
     } else {
-      // renew
       if (consent.consent_status !== "active") {
         return errorResponse("Only active consents can be renewed", 400);
       }
+
       const extendDays = 365;
       const newExpires = new Date(consent.expires_at ?? consent.granted_at);
       newExpires.setDate(newExpires.getDate() + extendDays);
-      consent.expires_at = newExpires.toISOString();
 
-      addAuditEntry({
-        event_type: "renewed",
-        consent_id: id,
-        data_principal_id: consent.data_principal_id,
-        purpose_id: consent.purpose_id,
-        timestamp: now,
-        ip_address: request.headers.get("x-forwarded-for") ?? undefined,
-        user_agent: request.headers.get("user-agent") ?? undefined,
-      });
+      const { data: updated, error: updateError } = await supabase
+        .from("consent_records")
+        .update({ expires_at: newExpires.toISOString() })
+        .eq("id", id)
+        .eq("org_id", orgId)
+        .select()
+        .single();
+
+      if (updateError) {
+        return errorResponse(
+          "Failed to update consent",
+          500,
+          updateError.message
+        );
+      }
+
+      return NextResponse.json(updated, { headers: CORS_HEADERS });
     }
-
-    return NextResponse.json(consent, { headers: CORS_HEADERS });
   } catch (err) {
     return errorResponse(
       "Failed to update consent",
@@ -135,10 +144,6 @@ export async function PATCH(
   }
 }
 
-/**
- * DELETE /api/consent/[id]
- * Soft-delete (mark as withdrawn).
- */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -146,28 +151,34 @@ export async function DELETE(
   try {
     const { id } = await params;
     const orgId = getOrgId(request);
+    const supabase = createAdminClient();
 
-    const consent = consentStore.get(id);
-    if (!consent) {
-      return errorResponse("Consent not found", 404);
-    }
-    if (consent.org_id !== orgId) {
+    const { data: consent, error: fetchError } = await supabase
+      .from("consent_records")
+      .select("id")
+      .eq("id", id)
+      .eq("org_id", orgId)
+      .single();
+
+    if (fetchError || !consent) {
       return errorResponse("Consent not found", 404);
     }
 
     const now = new Date().toISOString();
-    consent.consent_status = "withdrawn";
-    consent.withdrawn_at = now;
 
-    addAuditEntry({
-      event_type: "withdrawn",
-      consent_id: id,
-      data_principal_id: consent.data_principal_id,
-      purpose_id: consent.purpose_id,
-      timestamp: now,
-      ip_address: request.headers.get("x-forwarded-for") ?? undefined,
-      user_agent: request.headers.get("user-agent") ?? undefined,
-    });
+    const { error: updateError } = await supabase
+      .from("consent_records")
+      .update({ consent_status: "withdrawn", withdrawn_at: now })
+      .eq("id", id)
+      .eq("org_id", orgId);
+
+    if (updateError) {
+      return errorResponse(
+        "Failed to delete consent",
+        500,
+        updateError.message
+      );
+    }
 
     return NextResponse.json(
       { success: true, message: "Consent withdrawn" },

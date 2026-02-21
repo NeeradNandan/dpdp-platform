@@ -63,7 +63,7 @@ const bn = {
     filter: "ফিল্টার",
     export: "রপ্তানি",
     days: "দিন",
-    powered_by: "DPDP Shield দ্বারা চালিত",
+    powered_by: "Yojak দ্বারা চালিত",
   },
 } as const;
 

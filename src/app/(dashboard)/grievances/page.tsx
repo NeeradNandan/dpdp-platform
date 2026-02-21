@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Card,
   CardHeader,
@@ -23,7 +23,9 @@ import {
   Send,
 } from "lucide-react";
 import type { GrievanceTicket } from "@/types";
-import { formatDate, generateCaseId } from "@/lib/utils";
+import { formatDate, generateCaseId, calculateSLADeadline } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import { useOrg } from "@/hooks/use-org";
 
 const REQUEST_TYPES: GrievanceTicket["request_type"][] = [
   "access",
@@ -31,262 +33,6 @@ const REQUEST_TYPES: GrievanceTicket["request_type"][] = [
   "erasure",
   "portability",
   "objection",
-];
-
-const MOCK_GRIEVANCES: GrievanceTicket[] = [
-  {
-    id: "1",
-    org_id: "org-1",
-    case_id: "GRV-2026-A1B2C",
-    data_principal_email: "rajesh.kumar@outlook.com",
-    request_type: "access",
-    status: "open",
-    priority: "high",
-    description:
-      "I would like to request a copy of all my personal data that your organization holds. As per the DPDP Act 2023, I am entitled to access my data.",
-    ai_classification: "access_request",
-    sla_deadline: "2026-05-15T00:00:00Z",
-    created_at: "2026-02-15T10:30:00Z",
-    updated_at: "2026-02-15T10:30:00Z",
-  },
-  {
-    id: "2",
-    org_id: "org-1",
-    case_id: "GRV-2026-D3E4F",
-    data_principal_email: "priya.sharma@gmail.com",
-    request_type: "correction",
-    status: "in_progress",
-    priority: "medium",
-    description:
-      "My phone number in your records is incorrect. Please update it to +91 9876543210. The current number 9876512340 is wrong.",
-    ai_classification: "correction_request",
-    assigned_to: "Amit Verma",
-    sla_deadline: "2026-05-18T00:00:00Z",
-    created_at: "2026-02-12T14:20:00Z",
-    updated_at: "2026-02-20T09:00:00Z",
-  },
-  {
-    id: "3",
-    org_id: "org-1",
-    case_id: "GRV-2026-G5H6I",
-    data_principal_email: "sneha.patel@yahoo.co.in",
-    request_type: "erasure",
-    status: "awaiting_info",
-    priority: "critical",
-    description:
-      "I want to delete all my personal data from your systems. Please process my erasure request as per the DPDP Act. I no longer wish to use your services.",
-    ai_classification: "erasure_request",
-    sla_deadline: "2026-05-10T00:00:00Z",
-    created_at: "2026-02-10T09:15:00Z",
-    updated_at: "2026-02-18T11:30:00Z",
-  },
-  {
-    id: "4",
-    org_id: "org-1",
-    case_id: "GRV-2026-J7K8L",
-    data_principal_email: "vikram.singh@rediffmail.com",
-    request_type: "portability",
-    status: "resolved",
-    priority: "low",
-    description:
-      "I need to transfer my data to another service provider. Please provide my data in a machine-readable format (JSON or CSV).",
-    ai_classification: "portability_request",
-    assigned_to: "Neha Gupta",
-    sla_deadline: "2026-05-08T00:00:00Z",
-    resolved_at: "2026-02-18T16:00:00Z",
-    created_at: "2026-02-08T11:00:00Z",
-    updated_at: "2026-02-18T16:00:00Z",
-  },
-  {
-    id: "5",
-    org_id: "org-1",
-    case_id: "GRV-2026-M9N0O",
-    data_principal_email: "anita.desai@hotmail.com",
-    request_type: "objection",
-    status: "open",
-    priority: "high",
-    description:
-      "I object to my data being used for marketing purposes. I did not consent to receiving promotional emails. Please stop all marketing communications.",
-    ai_classification: "objection_request",
-    sla_deadline: "2026-05-12T00:00:00Z",
-    created_at: "2026-02-13T08:45:00Z",
-    updated_at: "2026-02-13T08:45:00Z",
-  },
-  {
-    id: "6",
-    org_id: "org-1",
-    case_id: "GRV-2026-P1Q2R",
-    data_principal_email: "arun.menon@zoho.com",
-    request_type: "access",
-    status: "in_progress",
-    priority: "medium",
-    description:
-      "Requesting access to my personal data including account details, transaction history, and any data shared with third parties.",
-    ai_classification: "access_request",
-    assigned_to: "Kavita Nair",
-    sla_deadline: "2026-05-20T00:00:00Z",
-    created_at: "2026-02-11T16:30:00Z",
-    updated_at: "2026-02-19T10:15:00Z",
-  },
-  {
-    id: "7",
-    org_id: "org-1",
-    case_id: "GRV-2026-S3T4U",
-    data_principal_email: "meera.iyer@proton.me",
-    request_type: "erasure",
-    status: "open",
-    priority: "critical",
-    description:
-      "Delete my account and all associated data. I want a complete erasure from your database. No retention of any kind.",
-    ai_classification: "erasure_request",
-    sla_deadline: "2026-05-11T00:00:00Z",
-    created_at: "2026-02-10T13:00:00Z",
-    updated_at: "2026-02-10T13:00:00Z",
-  },
-  {
-    id: "8",
-    org_id: "org-1",
-    case_id: "GRV-2026-V5W6X",
-    data_principal_email: "suresh.reddy@outlook.com",
-    request_type: "correction",
-    status: "resolved",
-    priority: "low",
-    description:
-      "My address has changed. Please update: New address - 42 MG Road, Bangalore 560001. Old was Koramangala.",
-    ai_classification: "correction_request",
-    assigned_to: "Rahul Joshi",
-    sla_deadline: "2026-05-22T00:00:00Z",
-    resolved_at: "2026-02-17T14:30:00Z",
-    created_at: "2026-02-09T10:00:00Z",
-    updated_at: "2026-02-17T14:30:00Z",
-  },
-  {
-    id: "9",
-    org_id: "org-1",
-    case_id: "GRV-2026-Y7Z8A",
-    data_principal_email: "latha.venkatesh@gmail.com",
-    request_type: "access",
-    status: "awaiting_info",
-    priority: "medium",
-    description:
-      "I need to view what data you have collected about me for KYC verification. Please provide details of documents stored.",
-    ai_classification: "access_request",
-    sla_deadline: "2026-05-19T00:00:00Z",
-    created_at: "2026-02-12T09:00:00Z",
-    updated_at: "2026-02-20T08:00:00Z",
-  },
-  {
-    id: "10",
-    org_id: "org-1",
-    case_id: "GRV-2026-B9C0D",
-    data_principal_email: "mohammed.rafiq@yahoo.com",
-    request_type: "portability",
-    status: "in_progress",
-    priority: "high",
-    description:
-      "Transfer my financial transaction data to my new bank's app. Need CSV format with all transaction history from Jan 2024.",
-    ai_classification: "portability_request",
-    assigned_to: "Deepa Krishnan",
-    sla_deadline: "2026-05-14T00:00:00Z",
-    created_at: "2026-02-14T11:20:00Z",
-    updated_at: "2026-02-20T12:00:00Z",
-  },
-  {
-    id: "11",
-    org_id: "org-1",
-    case_id: "GRV-2026-E1F2G",
-    data_principal_email: "kavitha.nair@outlook.com",
-    request_type: "objection",
-    status: "resolved",
-    priority: "medium",
-    description:
-      "Object to profiling. I don't want my data used for automated decision-making or profiling for loan eligibility.",
-    ai_classification: "objection_request",
-    assigned_to: "Sandeep Rao",
-    sla_deadline: "2026-05-16T00:00:00Z",
-    resolved_at: "2026-02-19T15:00:00Z",
-    created_at: "2026-02-11T14:00:00Z",
-    updated_at: "2026-02-19T15:00:00Z",
-  },
-  {
-    id: "12",
-    org_id: "org-1",
-    case_id: "GRV-2026-H3I4J",
-    data_principal_email: "ramesh.pillai@rediffmail.com",
-    request_type: "erasure",
-    status: "in_progress",
-    priority: "high",
-    description:
-      "Remove my data from your system. I am closing my account and want complete erasure as per my right under DPDP Act.",
-    ai_classification: "erasure_request",
-    assigned_to: "Anjali Mehta",
-    sla_deadline: "2026-05-13T00:00:00Z",
-    created_at: "2026-02-13T16:45:00Z",
-    updated_at: "2026-02-20T09:30:00Z",
-  },
-  {
-    id: "13",
-    org_id: "org-1",
-    case_id: "GRV-2026-K5L6M",
-    data_principal_email: "divya.chandran@zoho.com",
-    request_type: "correction",
-    status: "open",
-    priority: "low",
-    description:
-      "My date of birth is wrong in your records. Correct it to 15 March 1990. Currently showing as 15 March 1989.",
-    ai_classification: "correction_request",
-    sla_deadline: "2026-05-25T00:00:00Z",
-    created_at: "2026-02-08T12:00:00Z",
-    updated_at: "2026-02-08T12:00:00Z",
-  },
-  {
-    id: "14",
-    org_id: "org-1",
-    case_id: "GRV-2026-N7O8P",
-    data_principal_email: "ganesh.murthy@gmail.com",
-    request_type: "access",
-    status: "resolved",
-    priority: "medium",
-    description:
-      "Requested copy of my data. Need it for tax filing purposes. Include all account statements and KYC documents.",
-    ai_classification: "access_request",
-    assigned_to: "Priya Sundaram",
-    sla_deadline: "2026-05-05T00:00:00Z",
-    resolved_at: "2026-02-16T11:00:00Z",
-    created_at: "2026-02-06T10:00:00Z",
-    updated_at: "2026-02-16T11:00:00Z",
-  },
-  {
-    id: "15",
-    org_id: "org-1",
-    case_id: "GRV-2026-Q9R0S",
-    data_principal_email: "indira.bose@hotmail.com",
-    request_type: "portability",
-    status: "awaiting_info",
-    priority: "medium",
-    description:
-      "I want to port my health records to a new healthcare app. Please provide data in FHIR or JSON format.",
-    ai_classification: "portability_request",
-    sla_deadline: "2026-05-21T00:00:00Z",
-    created_at: "2026-02-10T15:30:00Z",
-    updated_at: "2026-02-19T14:00:00Z",
-  },
-  {
-    id: "16",
-    org_id: "org-1",
-    case_id: "GRV-2026-T1U2V",
-    data_principal_email: "balakrishnan.nair@proton.me",
-    request_type: "objection",
-    status: "in_progress",
-    priority: "high",
-    description:
-      "I object to my data being shared with affiliates for cross-selling. Withdraw my consent for data sharing.",
-    ai_classification: "objection_request",
-    assigned_to: "Vikram Malhotra",
-    sla_deadline: "2026-05-17T00:00:00Z",
-    created_at: "2026-02-12T11:00:00Z",
-    updated_at: "2026-02-20T10:00:00Z",
-  },
 ];
 
 const TABS = ["All Tickets", "Open", "SLA At Risk", "Resolved"] as const;
@@ -311,6 +57,9 @@ function getAIResponse(requestType: GrievanceTicket["request_type"]): string {
 }
 
 export default function GrievancesPage() {
+  const { orgId, loading: orgLoading } = useOrg();
+  const [tickets, setTickets] = useState<GrievanceTicket[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("All Tickets");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [aiResponseTicketId, setAiResponseTicketId] = useState<string | null>(
@@ -323,7 +72,20 @@ export default function GrievancesPage() {
     description: "",
     priority: "medium" as GrievanceTicket["priority"],
   });
-  const [tickets, setTickets] = useState<GrievanceTicket[]>(MOCK_GRIEVANCES);
+
+  useEffect(() => {
+    if (orgLoading) return;
+    const supabase = createClient();
+    supabase
+      .from("grievance_tickets")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (error) console.error("Failed to fetch grievances:", error);
+        else setTickets(data ?? []);
+        setLoading(false);
+      });
+  }, [orgLoading]);
 
   const filteredTickets = useMemo(() => {
     let list = tickets;
@@ -408,30 +170,39 @@ export default function GrievancesPage() {
     return d <= riskDate;
   };
 
-  const handleCreateGrievance = () => {
+  const handleCreateGrievance = async () => {
     if (!newGrievance.data_principal_email || !newGrievance.description) {
       alert("Please fill in email and description");
       return;
     }
     const caseId = generateCaseId();
     const created = new Date().toISOString();
-    const deadline = new Date();
-    deadline.setDate(deadline.getDate() + 90);
+    const slaDeadline = calculateSLADeadline(created);
 
-    const ticket: GrievanceTicket = {
-      id: String(tickets.length + 1),
-      org_id: "org-1",
-      case_id: caseId,
-      data_principal_email: newGrievance.data_principal_email,
-      request_type: newGrievance.request_type,
-      status: "open",
-      priority: newGrievance.priority,
-      description: newGrievance.description,
-      sla_deadline: deadline.toISOString(),
-      created_at: created,
-      updated_at: created,
-    };
-    setTickets((prev) => [ticket, ...prev]);
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("grievance_tickets")
+      .insert({
+        org_id: orgId,
+        case_id: caseId,
+        data_principal_email: newGrievance.data_principal_email,
+        request_type: newGrievance.request_type,
+        description: newGrievance.description,
+        status: "open",
+        priority: newGrievance.priority,
+        ai_classification: `${newGrievance.request_type}_request`,
+        sla_deadline: slaDeadline,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Failed to create grievance:", error);
+      alert("Failed to create grievance. Please try again.");
+      return;
+    }
+
+    setTickets((prev) => [data, ...prev]);
     setNewGrievance({
       data_principal_email: "",
       request_type: "access",
@@ -592,7 +363,19 @@ export default function GrievancesPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredTickets.map((ticket) => (
+              {(loading || orgLoading) ? (
+                <tr>
+                  <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                    Loading grievance tickets…
+                  </td>
+                </tr>
+              ) : filteredTickets.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                    No grievance tickets found.
+                  </td>
+                </tr>
+              ) : filteredTickets.map((ticket) => (
                 <React.Fragment key={ticket.id}>
                   <tr
                     key={ticket.id}

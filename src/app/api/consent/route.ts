@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { ConsentRecord } from "@/types";
-import {
-  consentStore,
-  purposeStore,
-  addAuditEntry,
-  DEFAULT_ORG_ID,
-} from "@/lib/consent-store";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { CORS_HEADERS } from "@/lib/cors";
+
+const DEFAULT_ORG_ID = "org_default_001";
 
 function getOrgId(request: NextRequest): string {
   return request.headers.get("x-org-id") ?? DEFAULT_ORG_ID;
@@ -31,13 +27,10 @@ function errorResponse(error: string, status: number, details?: string) {
   );
 }
 
-/**
- * GET /api/consent
- * List consents for the authenticated org with filters and pagination.
- */
 export async function GET(request: NextRequest) {
   try {
     const orgId = getOrgId(request);
+    const supabase = createAdminClient();
     const { searchParams } = new URL(request.url);
 
     const status = searchParams.get("status") as
@@ -53,26 +46,36 @@ export async function GET(request: NextRequest) {
       Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10))
     );
 
-    let results = Array.from(consentStore.values()).filter(
-      (c) => c.org_id === orgId
-    );
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from("consent_records")
+      .select("*", { count: "exact" })
+      .eq("org_id", orgId);
 
     if (status) {
-      results = results.filter((c) => c.consent_status === status);
+      query = query.eq("consent_status", status);
     }
     if (purposeId) {
-      results = results.filter((c) => c.purpose_id === purposeId);
+      query = query.eq("purpose_id", purposeId);
     }
     if (dataPrincipalId) {
-      results = results.filter((c) => c.data_principal_id === dataPrincipalId);
+      query = query.eq("data_principal_id", dataPrincipalId);
     }
 
-    const total = results.length;
-    const offset = (page - 1) * limit;
-    const items = results.slice(offset, offset + limit);
+    const { data: items, count, error } = await query.range(
+      offset,
+      offset + limit - 1
+    );
+
+    if (error) {
+      return errorResponse("Failed to list consents", 500, error.message);
+    }
+
+    const total = count ?? 0;
 
     return jsonResponse({
-      items,
+      items: items ?? [],
       pagination: {
         page,
         limit,
@@ -99,13 +102,10 @@ interface CreateConsentBody {
   metadata?: Record<string, unknown>;
 }
 
-/**
- * POST /api/consent
- * Record a new consent.
- */
 export async function POST(request: NextRequest) {
   try {
     const orgId = getOrgId(request);
+    const supabase = createAdminClient();
     let body: CreateConsentBody;
 
     try {
@@ -136,46 +136,44 @@ export async function POST(request: NextRequest) {
       return errorResponse("session_id is required", 400);
     }
 
-    const purpose = purposeStore.get(purpose_id);
+    const { data: purpose } = await supabase
+      .from("consent_purposes")
+      .select("title, retention_period_days")
+      .eq("id", purpose_id)
+      .single();
+
     const purposeDescription = purpose?.title ?? "Unknown purpose";
+    const retentionDays = purpose?.retention_period_days ?? 365;
 
     const now = new Date().toISOString();
-    const consentId = crypto.randomUUID();
-
-    const retentionDays = purpose?.retention_period_days ?? 365;
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + retentionDays);
 
-    const consentRecord: ConsentRecord = {
-      id: consentId,
-      org_id: orgId,
-      data_principal_id,
-      purpose_id,
-      purpose_description: purposeDescription,
-      consent_status: "active",
-      consent_method,
-      session_id,
-      ip_address: body.ip_address,
-      user_agent: body.user_agent,
-      granted_at: now,
-      expires_at: expiresAt.toISOString(),
-      metadata: body.metadata ?? {},
-    };
+    const { data: consentRecord, error } = await supabase
+      .from("consent_records")
+      .insert({
+        org_id: orgId,
+        data_principal_id,
+        purpose_id,
+        purpose_description: purposeDescription,
+        consent_status: "active",
+        consent_method,
+        session_id,
+        ip_address: body.ip_address,
+        user_agent: body.user_agent,
+        granted_at: now,
+        expires_at: expiresAt.toISOString(),
+        metadata: body.metadata ?? {},
+      })
+      .select()
+      .single();
 
-    consentStore.set(consentId, consentRecord);
-
-    addAuditEntry({
-      event_type: "granted",
-      consent_id: consentId,
-      data_principal_id,
-      purpose_id,
-      timestamp: now,
-      ip_address: body.ip_address,
-      user_agent: body.user_agent,
-    });
+    if (error) {
+      return errorResponse("Failed to create consent", 500, error.message);
+    }
 
     const consentArtifact = {
-      id: consentId,
+      id: consentRecord.id,
       org_id: orgId,
       purpose_id,
       data_principal_id,

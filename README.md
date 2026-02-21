@@ -1,4 +1,8 @@
-# DPDP Shield - Privacy-as-a-Service Compliance Platform
+# Yojak — Compliance, Connected.
+
+> योजक (Yojak) — Sanskrit for "connector". Connecting Indian businesses to DPDP Act compliance.
+
+## Privacy-as-a-Service Compliance Platform
 
 Automated DPDP Act 2023 compliance for Indian businesses. Consent management, data mapping, grievance redressal, and readiness scoring.
 
@@ -86,7 +90,7 @@ npm run build
 Embed on any website:
 ```html
 <script
-  src="https://cdn.dpdpshield.com/widget.js"
+  src="https://cdn.yojak.ai/widget.js"
   data-org-id="your_org_id"
   data-api-endpoint="https://your-app.com/api/consent">
 </script>

@@ -63,7 +63,7 @@ const te = {
     filter: "ఫిల్టర్",
     export: "ఎగుమతి",
     days: "రోజులు",
-    powered_by: "DPDP Shield ద్వారా పవర్ చేయబడింది",
+    powered_by: "Yojak ద్వారా పవర్ చేయబడింది",
   },
 } as const;
 

@@ -64,11 +64,11 @@
   <div class="card">
     <h2>Widget Controls</h2>
     <p>Use these buttons to test the widget API:</p>
-    <button onclick="window.DPDPShield?.show()">Re-open Banner (DPDPShield.show())</button>
-    <button class="secondary" onclick="console.log('Consent:', window.DPDPShield?.getConsent())">
+    <button onclick="window.Yojak?.show()">Re-open Banner (Yojak.show())</button>
+    <button class="secondary" onclick="console.log('Consent:', window.Yojak?.getConsent())">
       Log Current Consent
     </button>
-    <button class="secondary" onclick="window.DPDPShield?.withdraw('analytics')">
+    <button class="secondary" onclick="window.Yojak?.withdraw('analytics')">
       Withdraw Analytics
     </button>
     <button class="secondary" onclick="localStorage.clear(); sessionStorage.clear(); location.reload();">
@@ -78,7 +78,7 @@
 
   <p>
     <strong>Config:</strong> The widget is loaded with <code>data-org-id="demo_org_123"</code>
-    and <code>data-api-endpoint="https://api.dpdpshield.com/v1/consent"</code>.
+    and <code>data-api-endpoint="https://api.yojak.ai/v1/consent"</code>.
     Clear storage and reload to see the banner again.
   </p>
 
@@ -87,7 +87,7 @@
     // Optional: override or extend config via global object
     window.__DPDP_CONFIG__ = {
       orgId: 'demo_org_123',
-      apiEndpoint: 'https://api.dpdpshield.com/v1/consent',
+      apiEndpoint: '/api/widget/consent',
       position: 'bottom',
       primaryColor: '#2563eb',
       onConsent: function(artifact) {
@@ -95,6 +95,6 @@
       }
     };
   </script>
-  <script src="./dist/widget.js" data-org-id="demo_org_123" data-api-endpoint="https://api.dpdpshield.com/v1/consent"></script>
+  <script src="./dist/widget.js" data-org-id="demo_org_123" data-api-endpoint="https://api.yojak.ai/v1/consent"></script>
 </body>
 </html>

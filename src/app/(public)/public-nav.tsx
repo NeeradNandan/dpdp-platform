@@ -16,7 +16,7 @@ export function PublicNav() {
           className="flex items-center gap-2 text-xl font-semibold text-slate-900"
         >
           <Shield className="h-7 w-7 text-indigo-600" />
-          DPDP Shield
+          Yojak
         </Link>
         <nav className="flex items-center gap-6">
           <div className="relative">

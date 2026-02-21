@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   Eye,
@@ -17,251 +17,25 @@ import {
   CardHeader,
   CardTitle,
   CardContent,
-  CardFooter,
 } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
+import { createClient } from "@/lib/supabase/client";
+import { useOrg } from "@/hooks/use-org";
 import type { ConsentRecord, ConsentPurpose } from "@/types";
 
-const MOCK_PURPOSES: ConsentPurpose[] = [
-  {
-    id: "p1",
-    org_id: "org-1",
-    code: "MARKETING",
-    title: "Marketing Communications",
-    description:
-      "Send promotional emails, SMS, and push notifications about products and offers.",
-    legal_basis: "Consent",
-    retention_period_days: 730,
-    is_mandatory: false,
-    created_at: "2025-01-15T10:00:00Z",
-  },
-  {
-    id: "p2",
-    org_id: "org-1",
-    code: "ANALYTICS",
-    title: "Analytics & Insights",
-    description:
-      "Process data for analytics, usage patterns, and product improvement.",
-    legal_basis: "Legitimate Interest",
-    retention_period_days: 365,
-    is_mandatory: false,
-    created_at: "2025-01-15T10:00:00Z",
-  },
-  {
-    id: "p3",
-    org_id: "org-1",
-    code: "SERVICE",
-    title: "Service Delivery",
-    description:
-      "Essential data processing for account creation, authentication, and core service delivery.",
-    legal_basis: "Contract",
-    retention_period_days: 2555,
-    is_mandatory: true,
-    created_at: "2025-01-15T10:00:00Z",
-  },
-  {
-    id: "p4",
-    org_id: "org-1",
-    code: "THIRD_PARTY",
-    title: "Third-Party Sharing",
-    description:
-      "Share data with verified partners for fraud prevention and compliance.",
-    legal_basis: "Consent",
-    retention_period_days: 365,
-    is_mandatory: false,
-    created_at: "2025-01-15T10:00:00Z",
-  },
-  {
-    id: "p5",
-    org_id: "org-1",
-    code: "PAYMENT",
-    title: "Payment Processing",
-    description:
-      "Process payment information for transactions and refunds.",
-    legal_basis: "Contract",
-    retention_period_days: 2555,
-    is_mandatory: true,
-    created_at: "2025-01-15T10:00:00Z",
-  },
-];
-
-const MOCK_CONSENTS: ConsentRecord[] = [
-  {
-    id: "c1",
-    org_id: "org-1",
-    data_principal_id: "dp_8f3a2b1c4d5e6f7a",
-    purpose_id: "p1",
-    purpose_description: "Marketing Communications",
-    consent_status: "active",
-    consent_method: "explicit_click",
-    session_id: "sess_001",
-    granted_at: "2025-02-18T10:30:00Z",
-    metadata: {},
-  },
-  {
-    id: "c2",
-    org_id: "org-1",
-    data_principal_id: "dp_a1b2c3d4e5f6g7h",
-    purpose_id: "p2",
-    purpose_description: "Analytics & Insights",
-    consent_status: "active",
-    consent_method: "toggle",
-    session_id: "sess_002",
-    granted_at: "2025-02-19T14:20:00Z",
-    metadata: {},
-  },
-  {
-    id: "c3",
-    org_id: "org-1",
-    data_principal_id: "dp_9e8d7c6b5a4f3e",
-    purpose_id: "p3",
-    purpose_description: "Service Delivery",
-    consent_status: "active",
-    consent_method: "form_submission",
-    session_id: "sess_003",
-    granted_at: "2025-02-17T09:15:00Z",
-    metadata: {},
-  },
-  {
-    id: "c4",
-    org_id: "org-1",
-    data_principal_id: "dp_1a2b3c4d5e6f7g",
-    purpose_id: "p4",
-    purpose_description: "Third-Party Sharing",
-    consent_status: "withdrawn",
-    consent_method: "explicit_click",
-    session_id: "sess_004",
-    granted_at: "2025-02-10T11:00:00Z",
-    withdrawn_at: "2025-02-20T16:45:00Z",
-    metadata: {},
-  },
-  {
-    id: "c5",
-    org_id: "org-1",
-    data_principal_id: "dp_8h7g6f5e4d3c2b",
-    purpose_id: "p5",
-    purpose_description: "Payment Processing",
-    consent_status: "active",
-    consent_method: "form_submission",
-    session_id: "sess_005",
-    granted_at: "2025-02-15T13:30:00Z",
-    metadata: {},
-  },
-  {
-    id: "c6",
-    org_id: "org-1",
-    data_principal_id: "dp_2b3c4d5e6f7g8h",
-    purpose_id: "p1",
-    purpose_description: "Marketing Communications",
-    consent_status: "expired",
-    consent_method: "explicit_click",
-    session_id: "sess_006",
-    granted_at: "2024-08-01T10:00:00Z",
-    expires_at: "2025-02-01T10:00:00Z",
-    metadata: {},
-  },
-  {
-    id: "c7",
-    org_id: "org-1",
-    data_principal_id: "dp_3c4d5e6f7g8h9i",
-    purpose_id: "p2",
-    purpose_description: "Analytics & Insights",
-    consent_status: "active",
-    consent_method: "toggle",
-    session_id: "sess_007",
-    granted_at: "2025-02-20T08:00:00Z",
-    metadata: {},
-  },
-  {
-    id: "c8",
-    org_id: "org-1",
-    data_principal_id: "dp_4d5e6f7g8h9i0j",
-    purpose_id: "p3",
-    purpose_description: "Service Delivery",
-    consent_status: "active",
-    consent_method: "form_submission",
-    session_id: "sess_008",
-    granted_at: "2025-02-16T12:00:00Z",
-    metadata: {},
-  },
-  {
-    id: "c9",
-    org_id: "org-1",
-    data_principal_id: "dp_5e6f7g8h9i0j1k",
-    purpose_id: "p1",
-    purpose_description: "Marketing Communications",
-    consent_status: "active",
-    consent_method: "explicit_click",
-    session_id: "sess_009",
-    granted_at: "2025-02-21T09:30:00Z",
-    metadata: {},
-  },
-  {
-    id: "c10",
-    org_id: "org-1",
-    data_principal_id: "dp_6f7g8h9i0j1k2l",
-    purpose_id: "p4",
-    purpose_description: "Third-Party Sharing",
-    consent_status: "pending",
-    consent_method: "explicit_click",
-    session_id: "sess_010",
-    granted_at: "2025-02-21T11:00:00Z",
-    metadata: {},
-  },
-];
-
-type ConsentLogEvent = {
+type AuditLogEntry = {
   id: string;
+  org_id: string;
   consent_id: string;
-  event: "granted" | "withdrawn" | "expired";
+  event_type: string;
   data_principal_id: string;
-  purpose: string;
-  timestamp: string;
+  purpose_id: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  event_metadata: Record<string, unknown> | null;
+  created_at: string;
 };
-
-const MOCK_CONSENT_LOGS: ConsentLogEvent[] = [
-  {
-    id: "log1",
-    consent_id: "c9",
-    event: "granted",
-    data_principal_id: "dp_5e6f7g8h9i0j1k",
-    purpose: "Marketing Communications",
-    timestamp: "2025-02-21T09:30:00Z",
-  },
-  {
-    id: "log2",
-    consent_id: "c4",
-    event: "withdrawn",
-    data_principal_id: "dp_1a2b3c4d5e6f7g",
-    purpose: "Third-Party Sharing",
-    timestamp: "2025-02-20T16:45:00Z",
-  },
-  {
-    id: "log3",
-    consent_id: "c7",
-    event: "granted",
-    data_principal_id: "dp_3c4d5e6f7g8h9i",
-    purpose: "Analytics & Insights",
-    timestamp: "2025-02-20T08:00:00Z",
-  },
-  {
-    id: "log4",
-    consent_id: "c6",
-    event: "expired",
-    data_principal_id: "dp_2b3c4d5e6f7g8h",
-    purpose: "Marketing Communications",
-    timestamp: "2025-02-01T10:00:00Z",
-  },
-  {
-    id: "log5",
-    consent_id: "c5",
-    event: "granted",
-    data_principal_id: "dp_8h7g6f5e4d3c2b",
-    purpose: "Payment Processing",
-    timestamp: "2025-02-15T13:30:00Z",
-  },
-];
 
 const LEGAL_BASIS_OPTIONS = [
   "Consent",
@@ -304,12 +78,17 @@ function getStatusBadgeVariant(
 }
 
 export default function ConsentPage() {
+  const supabase = createClient();
+  const { orgId, loading: orgLoading } = useOrg();
+
   const [activeTab, setActiveTab] = useState<
     "active" | "purposes" | "logs"
   >("active");
   const [modalOpen, setModalOpen] = useState(false);
-  const [consents, setConsents] = useState<ConsentRecord[]>(MOCK_CONSENTS);
-  const [purposes, setPurposes] = useState<ConsentPurpose[]>(MOCK_PURPOSES);
+  const [loading, setLoading] = useState(true);
+  const [consents, setConsents] = useState<ConsentRecord[]>([]);
+  const [purposes, setPurposes] = useState<ConsentPurpose[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
 
   const [formData, setFormData] = useState({
     code: "",
@@ -320,19 +99,65 @@ export default function ConsentPage() {
     is_mandatory: false,
   });
 
-  const handleAddPurpose = () => {
-    const newPurpose: ConsentPurpose = {
-      id: `p${purposes.length + 1}`,
-      org_id: "org-1",
-      code: formData.code,
-      title: formData.title,
-      description: formData.description,
-      legal_basis: formData.legal_basis,
-      retention_period_days: formData.retention_period_days,
-      is_mandatory: formData.is_mandatory,
-      created_at: new Date().toISOString(),
-    };
-    setPurposes([...purposes, newPurpose]);
+  const fetchAuditLogs = useCallback(async () => {
+    const { data } = await supabase
+      .from("consent_audit_log")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (data) setAuditLogs(data);
+  }, [supabase]);
+
+  useEffect(() => {
+    if (orgLoading || !orgId) return;
+
+    async function fetchData() {
+      setLoading(true);
+
+      const [purposesRes, consentsRes, logsRes] = await Promise.all([
+        supabase.from("consent_purposes").select("*"),
+        supabase
+          .from("consent_records")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("consent_audit_log")
+          .select("*")
+          .order("created_at", { ascending: false }),
+      ]);
+
+      if (purposesRes.data) setPurposes(purposesRes.data);
+      if (consentsRes.data) setConsents(consentsRes.data);
+      if (logsRes.data) setAuditLogs(logsRes.data);
+
+      setLoading(false);
+    }
+
+    fetchData();
+  }, [orgId, orgLoading, supabase]);
+
+  const handleAddPurpose = async () => {
+    if (!orgId) return;
+
+    const { data, error } = await supabase
+      .from("consent_purposes")
+      .insert({
+        org_id: orgId,
+        code: formData.code,
+        title: formData.title,
+        description: formData.description,
+        legal_basis: formData.legal_basis,
+        retention_period_days: formData.retention_period_days,
+        is_mandatory: formData.is_mandatory,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Failed to add purpose:", error.message);
+      return;
+    }
+
+    setPurposes((prev) => [...prev, data]);
     setFormData({
       code: "",
       title: "",
@@ -344,18 +169,24 @@ export default function ConsentPage() {
     setModalOpen(false);
   };
 
-  const handleWithdraw = (id: string) => {
-    setConsents((prev) =>
-      prev.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              consent_status: "withdrawn" as const,
-              withdrawn_at: new Date().toISOString(),
-            }
-          : c
-      )
-    );
+  const handleWithdraw = async (id: string) => {
+    const { data, error } = await supabase
+      .from("consent_records")
+      .update({
+        consent_status: "withdrawn",
+        withdrawn_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Failed to withdraw consent:", error.message);
+      return;
+    }
+
+    setConsents((prev) => prev.map((c) => (c.id === id ? data : c)));
+    await fetchAuditLogs();
   };
 
   const getConsentCount = (purposeId: string) =>
@@ -363,11 +194,22 @@ export default function ConsentPage() {
       (c) => c.purpose_id === purposeId && c.consent_status === "active"
     ).length;
 
+  const purposeTitle = (purposeId: string) =>
+    purposes.find((p) => p.id === purposeId)?.title ?? purposeId;
+
   const tabs = [
     { id: "active" as const, label: "Active Consents" },
     { id: "purposes" as const, label: "Purposes" },
     { id: "logs" as const, label: "Consent Logs" },
   ];
+
+  if (orgLoading || loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <p className="text-gray-500">Loading consent data…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -404,103 +246,115 @@ export default function ConsentPage() {
       {activeTab === "active" && (
         <Card>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 text-left text-gray-600">
-                    <th className="px-6 py-4 font-medium">Data Principal ID</th>
-                    <th className="px-6 py-4 font-medium">Purpose</th>
-                    <th className="px-6 py-4 font-medium">Status</th>
-                    <th className="px-6 py-4 font-medium">Method</th>
-                    <th className="px-6 py-4 font-medium">Granted At</th>
-                    <th className="px-6 py-4 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {consents.map((c) => (
-                    <tr key={c.id} className="border-b border-gray-100">
-                      <td className="px-6 py-4 font-mono text-gray-900">
-                        {truncateId(c.data_principal_id)}
-                      </td>
-                      <td className="px-6 py-4 text-gray-700">
-                        {c.purpose_description}
-                      </td>
-                      <td className="px-6 py-4">
-                        <Badge variant={getStatusBadgeVariant(c.consent_status)}>
-                          {c.consent_status}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 capitalize text-gray-600">
-                        {c.consent_method.replace("_", " ")}
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">
-                        {formatDate(c.granted_at)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="mr-1 h-3.5 w-3.5" />
-                            View
-                          </Button>
-                          {c.consent_status === "active" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                              onClick={() => handleWithdraw(c.id)}
-                            >
-                              <RotateCcw className="mr-1 h-3.5 w-3.5" />
-                              Withdraw
-                            </Button>
-                          )}
-                        </div>
-                      </td>
+            {consents.length === 0 ? (
+              <p className="px-6 py-12 text-center text-gray-500">
+                No consent records yet.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 text-left text-gray-600">
+                      <th className="px-6 py-4 font-medium">Data Principal ID</th>
+                      <th className="px-6 py-4 font-medium">Purpose</th>
+                      <th className="px-6 py-4 font-medium">Status</th>
+                      <th className="px-6 py-4 font-medium">Method</th>
+                      <th className="px-6 py-4 font-medium">Granted At</th>
+                      <th className="px-6 py-4 font-medium">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {consents.map((c) => (
+                      <tr key={c.id} className="border-b border-gray-100">
+                        <td className="px-6 py-4 font-mono text-gray-900">
+                          {truncateId(c.data_principal_id)}
+                        </td>
+                        <td className="px-6 py-4 text-gray-700">
+                          {c.purpose_description}
+                        </td>
+                        <td className="px-6 py-4">
+                          <Badge variant={getStatusBadgeVariant(c.consent_status)}>
+                            {c.consent_status}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 capitalize text-gray-600">
+                          {c.consent_method.replace("_", " ")}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">
+                          {formatDate(c.granted_at)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm">
+                              <Eye className="mr-1 h-3.5 w-3.5" />
+                              View
+                            </Button>
+                            {c.consent_status === "active" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                                onClick={() => handleWithdraw(c.id)}
+                              >
+                                <RotateCcw className="mr-1 h-3.5 w-3.5" />
+                                Withdraw
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
       {/* Purposes Tab */}
       {activeTab === "purposes" && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {purposes.map((p) => (
-            <Card key={p.id}>
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-base">{p.title}</CardTitle>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="text-red-600">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+        purposes.length === 0 ? (
+          <p className="py-12 text-center text-gray-500">
+            No consent purposes defined. Click &quot;Add Purpose&quot; to create one.
+          </p>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {purposes.map((p) => (
+              <Card key={p.id}>
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between">
+                    <CardTitle className="text-base">{p.title}</CardTitle>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-red-600">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                <p className="text-xs font-mono text-gray-500">{p.code}</p>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-sm text-gray-600">{p.description}</p>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="info">{p.legal_basis}</Badge>
-                  <span className="text-xs text-gray-500">
-                    {p.retention_period_days} days retention
-                  </span>
-                  {p.is_mandatory && (
-                    <Badge variant="warning">Mandatory</Badge>
-                  )}
-                </div>
-                <p className="text-sm text-gray-600">
-                  <strong>{getConsentCount(p.id)}</strong> active consents
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  <p className="text-xs font-mono text-gray-500">{p.code}</p>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p className="text-sm text-gray-600">{p.description}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="info">{p.legal_basis}</Badge>
+                    <span className="text-xs text-gray-500">
+                      {p.retention_period_days} days retention
+                    </span>
+                    {p.is_mandatory && (
+                      <Badge variant="warning">Mandatory</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    <strong>{getConsentCount(p.id)}</strong> active consents
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )
       )}
 
       {/* Consent Logs Tab */}
@@ -513,35 +367,41 @@ export default function ConsentPage() {
             </p>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {MOCK_CONSENT_LOGS.map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-center gap-4 rounded-lg border border-gray-100 p-4"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100">
-                    {log.event === "granted" ? (
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                    ) : log.event === "withdrawn" ? (
-                      <RotateCcw className="h-5 w-5 text-red-600" />
-                    ) : (
-                      <Clock className="h-5 w-5 text-amber-600" />
-                    )}
+            {auditLogs.length === 0 ? (
+              <p className="py-12 text-center text-gray-500">
+                No audit log entries yet.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {auditLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="flex items-center gap-4 rounded-lg border border-gray-100 p-4"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                      {log.event_type === "granted" ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : log.event_type === "withdrawn" ? (
+                        <RotateCcw className="h-5 w-5 text-red-600" />
+                      ) : (
+                        <Clock className="h-5 w-5 text-amber-600" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900">
+                        Consent {log.event_type} — {purposeTitle(log.purpose_id)}
+                      </p>
+                      <p className="text-xs text-gray-500 font-mono">
+                        {truncateId(log.data_principal_id)}
+                      </p>
+                    </div>
+                    <span className="text-sm text-gray-600">
+                      {formatDate(log.created_at)}
+                    </span>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-gray-900">
-                      Consent {log.event} — {log.purpose}
-                    </p>
-                    <p className="text-xs text-gray-500 font-mono">
-                      {truncateId(log.data_principal_id)}
-                    </p>
-                  </div>
-                  <span className="text-sm text-gray-600">
-                    {formatDate(log.timestamp)}
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

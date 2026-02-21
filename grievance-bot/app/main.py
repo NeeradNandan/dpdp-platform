@@ -1,4 +1,4 @@
-"""DPDP Shield Grievance Bot API - FastAPI application."""
+"""Yojak Grievance Bot API - FastAPI application."""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes import router
 
 app = FastAPI(
-    title="DPDP Shield Grievance Bot API",
+    title="Yojak Grievance Bot API",
     version="1.0.0",
     description="AI-powered grievance redressal for the DPDP PaaS platform",
 )

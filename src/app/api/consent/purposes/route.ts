@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { ConsentPurpose } from "@/types";
-import { purposeStore, DEFAULT_ORG_ID } from "@/lib/consent-store";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { CORS_HEADERS } from "@/lib/cors";
+
+const DEFAULT_ORG_ID = "org_default_001";
 
 function getOrgId(request: NextRequest): string {
   return request.headers.get("x-org-id") ?? DEFAULT_ORG_ID;
@@ -14,20 +15,22 @@ function errorResponse(error: string, status: number, details?: string) {
   );
 }
 
-/**
- * GET /api/consent/purposes
- * List all consent purposes for the org.
- */
 export async function GET(request: NextRequest) {
   try {
     const orgId = getOrgId(request);
+    const supabase = createAdminClient();
 
-    const purposes = Array.from(purposeStore.values()).filter(
-      (p) => p.org_id === orgId
-    );
+    const { data: purposes, error } = await supabase
+      .from("consent_purposes")
+      .select("*")
+      .eq("org_id", orgId);
+
+    if (error) {
+      return errorResponse("Failed to list purposes", 500, error.message);
+    }
 
     return NextResponse.json(
-      { purposes, total: purposes.length },
+      { purposes: purposes ?? [], total: purposes?.length ?? 0 },
       { headers: CORS_HEADERS }
     );
   } catch (err) {
@@ -48,13 +51,10 @@ interface CreatePurposeBody {
   is_mandatory: boolean;
 }
 
-/**
- * POST /api/consent/purposes
- * Create a new consent purpose.
- */
 export async function POST(request: NextRequest) {
   try {
     const orgId = getOrgId(request);
+    const supabase = createAdminClient();
     let body: CreatePurposeBody;
 
     try {
@@ -94,32 +94,44 @@ export async function POST(request: NextRequest) {
       );
     }
     if (typeof is_mandatory !== "boolean") {
-      return errorResponse("is_mandatory is required and must be a boolean", 400);
+      return errorResponse(
+        "is_mandatory is required and must be a boolean",
+        400
+      );
     }
 
-    const existingByCode = Array.from(purposeStore.values()).find(
-      (p) => p.org_id === orgId && p.code.toLowerCase() === code.toLowerCase()
-    );
+    const { data: existingByCode } = await supabase
+      .from("consent_purposes")
+      .select("id")
+      .eq("org_id", orgId)
+      .ilike("code", code)
+      .limit(1)
+      .single();
+
     if (existingByCode) {
-      return errorResponse(`Purpose with code '${code}' already exists`, 400);
+      return errorResponse(
+        `Purpose with code '${code}' already exists`,
+        400
+      );
     }
 
-    const now = new Date().toISOString();
-    const purposeId = crypto.randomUUID();
+    const { data: purpose, error } = await supabase
+      .from("consent_purposes")
+      .insert({
+        org_id: orgId,
+        code: code.trim(),
+        title: title.trim(),
+        description: description.trim(),
+        legal_basis: legal_basis.trim(),
+        retention_period_days,
+        is_mandatory,
+      })
+      .select()
+      .single();
 
-    const purpose: ConsentPurpose = {
-      id: purposeId,
-      org_id: orgId,
-      code: code.trim(),
-      title: title.trim(),
-      description: description.trim(),
-      legal_basis: legal_basis.trim(),
-      retention_period_days,
-      is_mandatory,
-      created_at: now,
-    };
-
-    purposeStore.set(purposeId, purpose);
+    if (error) {
+      return errorResponse("Failed to create purpose", 500, error.message);
+    }
 
     return NextResponse.json(purpose, {
       status: 201,

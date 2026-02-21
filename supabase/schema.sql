@@ -1,4 +1,4 @@
--- DPDP Shield: Privacy-as-a-Service Database Schema
+-- Yojak: Privacy-as-a-Service Database Schema
 -- Designed for Supabase (PostgreSQL) with Row-Level Security
 
 -- Enable UUID generation

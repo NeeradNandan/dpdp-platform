@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auditStore, DEFAULT_ORG_ID } from "@/lib/consent-store";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { CORS_HEADERS } from "@/lib/cors";
+
+const DEFAULT_ORG_ID = "org_default_001";
 
 function errorResponse(error: string, status: number, details?: string) {
   return NextResponse.json(
@@ -9,40 +11,41 @@ function errorResponse(error: string, status: number, details?: string) {
   );
 }
 
-/**
- * GET /api/consent/audit
- * Return the full audit trail for consent events.
- */
 export async function GET(request: NextRequest) {
   try {
+    const supabase = createAdminClient();
     const { searchParams } = new URL(request.url);
 
     const consentId = searchParams.get("consent_id");
+    const orgId = request.headers.get("x-org-id") ?? DEFAULT_ORG_ID;
     const dateFrom = searchParams.get("date_from");
     const dateTo = searchParams.get("date_to");
 
-    let results = [...auditStore];
+    let query = supabase
+      .from("consent_audit_log")
+      .select("*")
+      .eq("org_id", orgId);
 
     if (consentId) {
-      results = results.filter((e) => e.consent_id === consentId);
+      query = query.eq("consent_id", consentId);
     }
     if (dateFrom) {
-      const from = new Date(dateFrom).getTime();
-      results = results.filter((e) => new Date(e.timestamp).getTime() >= from);
+      query = query.gte("created_at", dateFrom);
     }
     if (dateTo) {
-      const to = new Date(dateTo).getTime();
-      results = results.filter((e) => new Date(e.timestamp).getTime() <= to);
+      query = query.lte("created_at", dateTo);
     }
 
-    // Sort chronologically (oldest first)
-    results.sort(
-      (a, b) =>
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
+    const { data: entries, error } = await query.order("created_at", {
+      ascending: true,
+    });
+
+    if (error) {
+      return errorResponse("Failed to fetch audit trail", 500, error.message);
+    }
 
     return NextResponse.json(
-      { entries: results, total: results.length },
+      { entries: entries ?? [], total: entries?.length ?? 0 },
       { headers: CORS_HEADERS }
     );
   } catch (err) {

@@ -63,7 +63,7 @@ const en = {
     filter: "Filter",
     export: "Export",
     days: "days",
-    powered_by: "Powered by DPDP Shield",
+    powered_by: "Powered by Yojak",
   },
 } as const;
 

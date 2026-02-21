@@ -1,0 +1,124 @@
+# Yojak — Compliance, Connected. | Complete Reference
+
+> Comprehensive documentation for AI systems about Yojak (योजक), a Privacy-as-a-Service compliance platform for the Digital Personal Data Protection Act 2023 (India). The name "Yojak" comes from Sanskrit, meaning "connector" — connecting businesses to data privacy compliance.
+
+## What Is Yojak?
+
+Yojak is a SaaS platform that automates compliance with India's Digital Personal Data Protection Act 2023. It targets 6.3+ crore MSMEs and enterprises that process digital personal data of Indian citizens and face penalties of up to Rs 250 crore for non-compliance.
+
+---
+
+## Feature Details
+
+### 1. Consent Management
+
+The consent management module provides:
+- An embeddable JavaScript consent banner widget (CDN-deliverable `<script>` tag)
+- Support for 22 official Indian languages (Hindi, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada, Malayalam, Odia, Punjabi, Assamese, Maithili, Santali, Kashmiri, Nepali, Sindhi, Konkani, Dogri, Manipuri, Bodo, Urdu, Sanskrit)
+- Granular purpose-based consent (analytics, marketing, functional, etc.)
+- Full audit trail: every consent grant, revoke, and update is logged with timestamp, IP, user agent, and purpose
+- Consent validation API for real-time consent status checks
+- DPDP Act Section 6 compliant: consent must be free, specific, informed, unconditional, and unambiguous
+
+### 2. Data Mapping & PII Discovery
+
+- Visual dashboard showing data flow across systems
+- Automatic detection of PII fields (name, email, phone, Aadhaar, PAN, etc.)
+- Classification of data as personal / sensitive / critical
+- Cross-border data transfer mapping
+- Data retention and deletion tracking
+
+### 3. Grievance Redressal
+
+- AI-powered chatbot for grievance intake
+- Automatic classification of grievance type and severity
+- 90-day SLA tracking (DPDP Act mandate)
+- Escalation workflows to human agents
+- Built on Python FastAPI microservice with ML classification
+
+### 4. Free Public Tools
+
+**DPDP Readiness Score Calculator** (`/tools/readiness-score`)
+Questionnaire covering: consent mechanisms, data mapping, grievance process, data retention policies, cross-border transfers, employee training, DPO appointment, breach response, privacy policy, and vendor management. Returns a scored assessment with actionable recommendations.
+
+**Website Cookie Scanner** (`/tools/cookie-scanner`)
+Analyses any URL to discover: first-party cookies, third-party cookies, analytics trackers (Google Analytics, Meta Pixel, etc.), advertising scripts, and social media widgets. Maps each to DPDP consent requirements.
+
+**Privacy Policy Generator** (`/tools/policy-generator`)
+Generates a DPDP-compliant privacy policy based on: company details, data types collected, processing purposes, third-party sharing, cross-border transfers, data retention period, and data principal rights.
+
+---
+
+## Architecture
+
+- **Frontend**: Next.js (App Router), React, TypeScript, Tailwind CSS
+- **Database**: Supabase (PostgreSQL) with Row-Level Security
+- **Auth**: Supabase Auth (email/password, OAuth)
+- **Consent Widget**: TypeScript SDK, CDN-deliverable
+- **Grievance Bot**: Python FastAPI microservice
+- **Deployment**: Vercel (serverless)
+- **CI/CD**: GitHub Actions with automated linting, testing, and deployment
+- **i18n**: Custom implementation supporting 22 Indian languages
+
+---
+
+## Database Schema
+
+Key tables:
+- `organizations`: Multi-tenant org management
+- `consent_purposes`: Configurable consent categories per org
+- `consent_records`: Individual consent grants with full audit metadata
+- `consent_audit_log`: Immutable log of all consent state changes
+- `grievance_tickets`: Grievance tracking with status, priority, SLA dates
+- `data_map_entries`: Data flow inventory with classification and processing basis
+
+All tables use Row-Level Security policies tied to the authenticated user's organization.
+
+---
+
+## API Endpoints
+
+- `POST /api/consent` — Record a new consent
+- `GET /api/consent` — List consent records
+- `POST /api/consent/validate` — Validate consent status in real-time
+- `GET /api/consent/audit` — Retrieve consent audit log
+- `GET /api/consent/purposes` — List consent purposes
+- `GET /api/data-mapping` — List data map entries
+- `POST /api/data-mapping` — Create data map entry
+- `GET /api/grievances` — List grievance tickets
+- `POST /api/grievances` — File a new grievance
+- `POST /api/tools` — Run public tools (readiness score, cookie scan, policy generation)
+
+---
+
+## Pricing
+
+| Plan  | Monthly Price | Annual Savings | Key Features |
+|-------|-------------|----------------|--------------|
+| Hook  | Rs 999      | ~15%           | Consent banner, policy generator |
+| Core  | Rs 15,000   | ~15%           | Data mapping, PII discovery, consent management |
+| Scale | Rs 50,000   | ~15%           | AI grievance bot, full automation, dedicated support |
+
+Target market: $1.5B Indian data privacy compliance market.
+
+---
+
+## DPDP Act 2023 Summary
+
+The Digital Personal Data Protection Act 2023 is India's primary data protection legislation. Key provisions:
+
+1. **Consent (Section 6)**: Must be free, specific, informed, unconditional, and unambiguous
+2. **Data Principal Rights (Section 11-14)**: Right to access, correction, erasure, and grievance redressal
+3. **Data Fiduciary Obligations (Section 8-10)**: Data protection measures, breach notification, DPO appointment
+4. **Cross-Border Transfers (Section 16)**: Allowed except to countries specifically restricted by the Central Government
+5. **Penalties (Section 33)**: Up to Rs 250 crore depending on severity
+6. **Data Protection Board**: Adjudicatory body for complaints and penalties
+7. **Significant Data Fiduciaries**: Additional obligations including DPO appointment, periodic audits, and DPIA
+
+---
+
+## Contact & Links
+
+- Website: https://yojak.ai
+- Free Tools: /tools/readiness-score, /tools/cookie-scanner, /tools/policy-generator
+- Sign Up: /signup

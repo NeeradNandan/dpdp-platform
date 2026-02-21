@@ -1,0 +1,51 @@
+# Yojak — Compliance, Connected.
+
+> Yojak (योजक, Sanskrit for "connector") is a Privacy-as-a-Service platform that connects Indian businesses to DPDP Act 2023 compliance.
+
+Yojak automates compliance with India's Digital Personal Data Protection Act — from consent management and PII data mapping to AI-powered grievance redressal.
+
+## Core Capabilities
+
+- **Consent Management**: Embeddable consent banner widget supporting 22 Indian languages. Full audit trail of every consent grant, revoke, and update.
+- **Data Mapping & PII Discovery**: Visual dashboard to map personal data flows across your systems. Automatic detection of sensitive PII fields.
+- **Grievance Redressal**: AI-powered chatbot for grievance intake and classification. 90-day SLA tracking mandated by the DPDP Act.
+- **Privacy Policy Generator**: Generate DPDP Act compliant privacy policies customised for your business.
+- **Cookie Scanner**: Scan any website to discover cookies, trackers, and third-party scripts that require consent.
+- **Readiness Score**: Assess your organisation's DPDP compliance posture with a scored questionnaire.
+
+## Target Audience
+
+Indian businesses of all sizes — from MSMEs to large enterprises — that process digital personal data of Indian citizens.
+
+## Pricing
+
+| Plan  | Price        | Key Features                                    |
+|-------|-------------|------------------------------------------------|
+| Hook  | Rs 999/mo   | Consent banner, privacy policy generator        |
+| Core  | Rs 15,000/mo | Data mapping, PII discovery, consent management |
+| Scale | Rs 50,000/mo | AI grievance bot, full automation, dedicated support |
+
+## Free Tools
+
+- DPDP Readiness Score Calculator: /tools/readiness-score
+- Website Cookie Scanner: /tools/cookie-scanner
+- Privacy Policy Generator: /tools/policy-generator
+
+## DPDP Act Context
+
+The Digital Personal Data Protection Act 2023 applies to every entity that processes digital personal data of individuals in India. Key obligations include obtaining valid consent, implementing data protection measures, establishing grievance redressal mechanisms, and responding to data principal rights requests. Non-compliance penalties range from Rs 10,000 to Rs 250 crore.
+
+## Technical Details
+
+- Built with Next.js, React, TypeScript, Tailwind CSS
+- Supabase (PostgreSQL) for data storage with Row-Level Security
+- Embeddable JavaScript consent widget
+- REST APIs for consent management and data mapping
+- Supports 22 official Indian languages via i18n
+- Python FastAPI grievance classification microservice
+
+## Links
+
+- Homepage: https://yojak.ai
+- Sign Up: /signup
+- Full Documentation: /llms-full.txt

@@ -1,9 +1,136 @@
 import Link from "next/link";
 import { Shield } from "lucide-react";
+import { JsonLd } from "@/components/seo/json-ld";
+
+const SITE_URL =
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://yojak.ai";
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Yojak",
+  url: SITE_URL,
+  logo: `${SITE_URL}/icon-512.png`,
+  description:
+    "Compliance, Connected. Automated DPDP Act 2023 compliance platform for Indian businesses.",
+  foundingDate: "2025",
+  areaServed: { "@type": "Country", name: "India" },
+  sameAs: [],
+};
+
+const softwareSchema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Yojak",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  url: SITE_URL,
+  description:
+    "Automated DPDP Act compliance platform with consent management, PII data mapping, grievance redressal, and 22 Indian language support.",
+  offers: [
+    {
+      "@type": "Offer",
+      name: "Hook",
+      price: "999",
+      priceCurrency: "INR",
+      priceSpecification: {
+        "@type": "UnitPriceSpecification",
+        price: "999",
+        priceCurrency: "INR",
+        unitText: "MONTH",
+      },
+    },
+    {
+      "@type": "Offer",
+      name: "Core",
+      price: "15000",
+      priceCurrency: "INR",
+      priceSpecification: {
+        "@type": "UnitPriceSpecification",
+        price: "15000",
+        priceCurrency: "INR",
+        unitText: "MONTH",
+      },
+    },
+    {
+      "@type": "Offer",
+      name: "Scale",
+      price: "50000",
+      priceCurrency: "INR",
+      priceSpecification: {
+        "@type": "UnitPriceSpecification",
+        price: "50000",
+        priceCurrency: "INR",
+        unitText: "MONTH",
+      },
+    },
+  ],
+  featureList: [
+    "Consent Management",
+    "PII Data Mapping",
+    "AI Grievance Redressal",
+    "Privacy Policy Generator",
+    "Cookie Scanner",
+    "DPDP Readiness Score",
+    "22 Indian Languages",
+    "90-Day SLA Tracking",
+  ],
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "What is the DPDP Act 2023?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "The Digital Personal Data Protection Act 2023 (DPDP Act) is India's comprehensive data privacy law that regulates how businesses collect, store, process, and share personal data of Indian citizens. Non-compliance can attract penalties of up to Rs 250 crore.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Who needs to comply with the DPDP Act?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Every entity — from startups and MSMEs to large enterprises — that processes the digital personal data of individuals in India must comply with the DPDP Act. This includes businesses offering goods or services to Indian residents, even if they are based outside India.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What is Yojak?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yojak is a Privacy-as-a-Service platform that automates DPDP Act compliance for Indian businesses. The name means 'connector' in Sanskrit — connecting businesses to data privacy compliance. It provides consent management, PII data mapping, AI-powered grievance redressal, privacy policy generation, cookie scanning, and supports 22 Indian languages.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How much does Yojak cost?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yojak offers three plans: Hook at Rs 999/month for consent banners and policy generation, Core at Rs 15,000/month for data mapping and PII discovery, and Scale at Rs 50,000/month with AI grievance bot and full automation.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What are the penalties for non-compliance with the DPDP Act?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Penalties under the DPDP Act range from Rs 10,000 for individual non-compliance to Rs 250 crore for significant breaches by data fiduciaries. The Data Protection Board of India can impose these fines after investigation.",
+      },
+    },
+  ],
+};
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
+      <JsonLd data={organizationSchema} />
+      <JsonLd data={softwareSchema} />
+      <JsonLd data={faqSchema} />
+
       {/* Header */}
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
@@ -12,7 +139,7 @@ export default function Home() {
             className="flex items-center gap-2 text-xl font-semibold text-slate-900"
           >
             <Shield className="h-7 w-7 text-indigo-600" />
-            DPDP Shield
+            Yojak
           </Link>
           <nav className="flex items-center gap-6">
             <Link
@@ -38,9 +165,9 @@ export default function Home() {
             Automate Your DPDP Compliance
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600">
-            Non-compliance risks penalties up to Rs 250 crore. DPDP Shield
-            protects your business with automated consent management, data
-            mapping, and grievance redressal—so you stay compliant and focus on
+            Non-compliance risks penalties up to Rs 250 crore. Yojak
+            connects your business with automated consent management, data
+            mapping, and grievance redressal — so you stay compliant and focus on
             growth.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -183,6 +310,39 @@ export default function Home() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section className="border-t border-slate-200 bg-slate-50 px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="text-center text-3xl font-bold text-slate-900">
+            Frequently Asked Questions
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-center text-slate-600">
+            Everything you need to know about DPDP Act compliance and how Yojak
+            helps your business.
+          </p>
+          <dl className="mt-12 space-y-6">
+            {(
+              faqSchema.mainEntity as Array<{
+                name: string;
+                acceptedAnswer: { text: string };
+              }>
+            ).map((faq) => (
+              <div
+                key={faq.name}
+                className="rounded-xl border border-slate-200 bg-white p-6"
+              >
+                <dt className="text-base font-semibold text-slate-900">
+                  {faq.name}
+                </dt>
+                <dd className="mt-2 text-sm leading-relaxed text-slate-600">
+                  {faq.acceptedAnswer.text}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-slate-900 px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
@@ -190,7 +350,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <Shield className="h-6 w-6 text-indigo-400" />
               <span className="text-lg font-semibold text-white">
-                DPDP Shield
+                Yojak
               </span>
             </div>
             <p className="text-center text-sm text-slate-400 md:text-left">
@@ -213,7 +373,7 @@ export default function Home() {
             </div>
           </div>
           <p className="mt-8 text-center text-xs text-slate-500">
-            © {new Date().getFullYear()} DPDP Shield. All rights reserved.
+            © {new Date().getFullYear()} Yojak. All rights reserved.
           </p>
         </div>
       </footer>

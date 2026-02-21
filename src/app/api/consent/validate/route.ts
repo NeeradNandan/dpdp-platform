@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { consentStore, purposeStore, DEFAULT_ORG_ID } from "@/lib/consent-store";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { CORS_HEADERS } from "@/lib/cors";
+
+const DEFAULT_ORG_ID = "org_default_001";
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -30,13 +32,9 @@ interface ValidateBody {
   org_id?: string;
 }
 
-/**
- * POST /api/consent/validate
- * Real-time validation that consent exists and is active for a given purpose.
- * Per MeitY BRD - sync API for consent verification.
- */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createAdminClient();
     let body: ValidateBody;
     try {
       body = await request.json();
@@ -55,22 +53,25 @@ export async function POST(request: NextRequest) {
 
     const targetOrgId = org_id ?? getOrgId(request);
 
-    const consents = Array.from(consentStore.values()).filter(
-      (c) =>
-        c.org_id === targetOrgId &&
-        c.data_principal_id === data_principal_id &&
-        c.purpose_id === purpose_id &&
-        c.consent_status === "active"
-    );
+    const { data: consents } = await supabase
+      .from("consent_records")
+      .select("*")
+      .eq("org_id", targetOrgId)
+      .eq("data_principal_id", data_principal_id)
+      .eq("purpose_id", purpose_id)
+      .eq("consent_status", "active");
 
-    // Check expiry - consider expired if expires_at is in the past
     const now = new Date();
-    const activeConsent = consents.find((c) => {
+    const activeConsent = (consents ?? []).find((c) => {
       if (!c.expires_at) return true;
       return new Date(c.expires_at) > now;
     });
 
-    const purpose = purposeStore.get(purpose_id);
+    const { data: purpose } = await supabase
+      .from("consent_purposes")
+      .select("title")
+      .eq("id", purpose_id)
+      .single();
 
     if (!activeConsent) {
       return NextResponse.json(
@@ -87,7 +88,8 @@ export async function POST(request: NextRequest) {
         valid: true,
         consent_id: activeConsent.id,
         expires_at: activeConsent.expires_at,
-        purpose_description: activeConsent.purpose_description ?? purpose?.title,
+        purpose_description:
+          activeConsent.purpose_description ?? purpose?.title,
       },
       { headers: CORS_HEADERS }
     );

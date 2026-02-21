@@ -62,7 +62,7 @@ export function Sidebar() {
         <div className="flex h-16 items-center gap-3 border-b border-slate-700 px-4">
           <Shield className="h-8 w-8 shrink-0 text-indigo-400" />
           {!collapsed && (
-            <span className="font-semibold text-white">DPDP Shield</span>
+            <span className="font-semibold text-white">Yojak</span>
           )}
         </div>
 
