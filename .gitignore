@@ -32,6 +32,16 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.local.example
+
+# consent widget build
+consent-widget/dist/
+consent-widget/node_modules/
+
+# grievance bot
+grievance-bot/__pycache__/
+grievance-bot/*.pyc
+grievance-bot/.venv/
 
 # vercel
 .vercel
