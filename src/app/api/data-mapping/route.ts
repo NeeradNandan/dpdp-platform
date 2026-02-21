@@ -226,7 +226,7 @@ const MOCK_ENTRIES: DataMapEntry[] = [
 ];
 
 // In-memory store for POST additions (persists during server lifecycle)
-let entriesStore = [...MOCK_ENTRIES];
+const entriesStore = [...MOCK_ENTRIES];
 
 const VALID_PII_TYPES = [
   "name",

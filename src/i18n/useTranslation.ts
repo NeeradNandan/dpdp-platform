@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { getTranslations } from "./locales";
 import {
   SUPPORTED_LANGUAGES,
@@ -25,21 +25,19 @@ function getInitialLanguage(): string {
   return supported ? browserLang : DEFAULT_LANGUAGE;
 }
 
-export function useTranslation(initialLang?: string) {
-  const [lang, setLangState] = useState<string>(() => {
-    if (initialLang) {
-      const resolved = getLanguageByCode(initialLang);
-      return resolved?.code ?? DEFAULT_LANGUAGE;
-    }
-    return getInitialLanguage();
-  });
+function resolveLanguage(code?: string): string {
+  if (!code) return getInitialLanguage();
+  return getLanguageByCode(code)?.code ?? DEFAULT_LANGUAGE;
+}
 
-  useEffect(() => {
-    if (initialLang) {
-      const resolved = getLanguageByCode(initialLang);
-      setLangState(resolved?.code ?? DEFAULT_LANGUAGE);
-    }
-  }, [initialLang]);
+export function useTranslation(initialLang?: string) {
+  const [lang, setLangState] = useState<string>(() => resolveLanguage(initialLang));
+  const [prevInitialLang, setPrevInitialLang] = useState(initialLang);
+
+  if (initialLang !== prevInitialLang) {
+    setPrevInitialLang(initialLang);
+    setLangState(resolveLanguage(initialLang));
+  }
 
   const setLang = useCallback((newLang: string) => {
     const resolved = getLanguageByCode(newLang);

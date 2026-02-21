@@ -259,7 +259,7 @@ const MOCK_GRIEVANCES: GrievanceTicket[] = [
 ];
 
 // In-memory store for POST additions
-let grievancesStore = [...MOCK_GRIEVANCES];
+const grievancesStore = [...MOCK_GRIEVANCES];
 
 const VALID_REQUEST_TYPES = [
   "access",
