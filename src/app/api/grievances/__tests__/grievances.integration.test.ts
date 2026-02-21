@@ -7,7 +7,7 @@
 import { NextRequest } from "next/server";
 import { GET, POST } from "../route";
 
-function makeRequest(url: string, init?: RequestInit): NextRequest {
+function makeRequest(url: string, init?: { method?: string; body?: string }): NextRequest {
   return new NextRequest(new URL(url, "http://localhost:3000"), init);
 }
 

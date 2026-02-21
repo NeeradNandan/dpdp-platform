@@ -9,7 +9,7 @@ import { POST } from "../validate/route";
 import { POST as createConsent } from "../route";
 import { consentStore } from "@/lib/consent-store";
 
-function makeRequest(url: string, init?: RequestInit): NextRequest {
+function makeRequest(url: string, init?: { method?: string; body?: string }): NextRequest {
   return new NextRequest(new URL(url, "http://localhost:3000"), init);
 }
 

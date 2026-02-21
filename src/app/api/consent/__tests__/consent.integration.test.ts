@@ -8,9 +8,8 @@ import { NextRequest } from "next/server";
 import { GET, POST } from "../route";
 import { consentStore, purposeStore } from "@/lib/consent-store";
 
-function makeRequest(url: string, init?: RequestInit & { headers?: Record<string, string> }): NextRequest {
-  const req = new NextRequest(new URL(url, "http://localhost:3000"), init);
-  return req;
+function makeRequest(url: string, init?: { method?: string; body?: string; headers?: Record<string, string> }): NextRequest {
+  return new NextRequest(new URL(url, "http://localhost:3000"), init);
 }
 
 beforeEach(() => {
