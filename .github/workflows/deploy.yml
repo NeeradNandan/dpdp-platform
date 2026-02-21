@@ -2,7 +2,9 @@ name: Deploy to Vercel
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop, qa]
+  pull_request:
+    branches: [main, develop, qa]
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -23,10 +25,13 @@ jobs:
       - run: npm ci
       - run: npm run test:ci
 
+  # ── E3: Production (main) ──────────────────────────────
   deploy-production:
-    name: Deploy Production
+    name: "E3 — Deploy Production"
     needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -51,10 +56,77 @@ jobs:
           echo "url=$URL" >> "$GITHUB_OUTPUT"
 
       - name: Output deployment URL
-        run: echo "Deployed to ${{ steps.deploy.outputs.url }}"
+        run: echo "🚀 Production deployed to ${{ steps.deploy.outputs.url }}"
 
+  # ── E1: Dev (develop) ──────────────────────────────────
+  deploy-dev:
+    name: "E1 — Deploy Dev"
+    needs: test
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build project
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy preview
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Output deployment URL
+        run: echo "🔧 Dev deployed to ${{ steps.deploy.outputs.url }}"
+
+  # ── E2: QA (qa) ────────────────────────────────────────
+  deploy-qa:
+    name: "E2 — Deploy QA"
+    needs: test
+    if: github.ref == 'refs/heads/qa' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: qa
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build project
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy preview
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Output deployment URL
+        run: echo "🧪 QA deployed to ${{ steps.deploy.outputs.url }}"
+
+  # ── PR Preview ─────────────────────────────────────────
   deploy-preview:
-    name: Deploy Preview
+    name: Deploy PR Preview
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:

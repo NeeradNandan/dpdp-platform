@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,8 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const message = searchParams.get("message");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +38,11 @@ export default function LoginPage() {
       });
 
       if (signInError) {
-        setError(signInError.message ?? "Invalid credentials. Please try again.");
+        if (signInError.message?.includes("Email not confirmed")) {
+          setError("Please confirm your email before signing in. Check your inbox for the confirmation link.");
+        } else {
+          setError(signInError.message ?? "Invalid credentials. Please try again.");
+        }
         setLoading(false);
         return;
       }
@@ -60,6 +66,14 @@ export default function LoginPage() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {message && (
+            <div
+              className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+              role="status"
+            >
+              {message}
+            </div>
+          )}
           {error && (
             <div
               className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"

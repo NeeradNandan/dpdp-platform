@@ -2,21 +2,41 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-
-  if (!code) {
-    return NextResponse.redirect(new URL("/login?error=missing_code", request.url));
-  }
+  const tokenHash = searchParams.get("token_hash");
+  const type = searchParams.get("type");
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-  if (error) {
-    return NextResponse.redirect(
-      new URL(`/login?error=${encodeURIComponent(error.message)}`, request.url)
-    );
+  if (tokenHash && type) {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: type as "email" | "signup" | "recovery" | "email_change",
+    });
+
+    if (error) {
+      return NextResponse.redirect(
+        new URL(`/login?error=${encodeURIComponent(error.message)}`, origin)
+      );
+    }
+
+    return NextResponse.redirect(new URL("/dashboard", origin));
   }
 
-  return NextResponse.redirect(new URL("/dashboard", request.url));
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (error) {
+      return NextResponse.redirect(
+        new URL(`/login?error=${encodeURIComponent(error.message)}`, origin)
+      );
+    }
+
+    return NextResponse.redirect(new URL("/dashboard", origin));
+  }
+
+  return NextResponse.redirect(
+    new URL("/login?error=missing_code", origin)
+  );
 }
