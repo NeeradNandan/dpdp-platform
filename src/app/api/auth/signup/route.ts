@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const origin =
       request.headers.get("origin") ||
       process.env.NEXT_PUBLIC_APP_URL ||
-      "http://localhost:3000";
+      "https://dpdp-platform.vercel.app";
 
     const supabase = createAdminClient(supabaseUrl, supabaseAnonKey, {
       auth: { autoRefreshToken: false, persistSession: false },
