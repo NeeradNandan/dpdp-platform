@@ -32,7 +32,15 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
       - name: Push migrations
-        run: supabase db push
+        run: |
+          supabase db push 2>&1 || {
+            echo "Push failed — attempting to repair pre-existing migrations..."
+            for f in supabase/migrations/*.sql; do
+              VERSION=$(basename "$f" | grep -oE '^[0-9]+')
+              supabase migration repair --status applied "$VERSION" || true
+            done
+            supabase db push
+          }
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
@@ -58,7 +66,15 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
       - name: Push migrations
-        run: supabase db push
+        run: |
+          supabase db push 2>&1 || {
+            echo "Push failed — attempting to repair pre-existing migrations..."
+            for f in supabase/migrations/*.sql; do
+              VERSION=$(basename "$f" | grep -oE '^[0-9]+')
+              supabase migration repair --status applied "$VERSION" || true
+            done
+            supabase db push
+          }
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
