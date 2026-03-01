@@ -98,16 +98,7 @@ export async function POST(request: NextRequest) {
     console.error("Signup error:", err);
     console.error("Env check — URL set:", !!supabaseUrl, "AnonKey set:", !!supabaseAnonKey, "ServiceKey set:", !!serviceRoleKey, "AutoConfirm:", autoConfirm);
     return NextResponse.json(
-      {
-        error: "Something went wrong on our end. Please try again in a moment.",
-        _debug: {
-          urlSet: !!supabaseUrl,
-          anonKeySet: !!supabaseAnonKey,
-          serviceKeySet: !!serviceRoleKey,
-          autoConfirm,
-          urlPrefix: supabaseUrl?.substring(0, 20) || "EMPTY",
-        },
-      },
+      { error: "Something went wrong on our end. Please try again in a moment." },
       { status: 500 }
     );
   }
