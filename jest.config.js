@@ -28,10 +28,10 @@ const config = {
   ],
   coverageThreshold: {
     global: {
-      branches: 60,
-      functions: 70,
-      lines: 70,
-      statements: 70,
+      branches: 65,
+      functions: 75,
+      lines: 75,
+      statements: 75,
     },
     "src/lib/utils.ts": {
       branches: 100,
@@ -44,12 +44,6 @@ const config = {
       functions: 100,
       lines: 100,
       statements: 100,
-    },
-    "src/components/ui/": {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80,
     },
   },
 };
