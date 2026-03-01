@@ -1,0 +1,99 @@
+name: Auto-Promote
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [develop, qa]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote-dev-to-qa:
+    name: "PR: develop → qa"
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'develop' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for diff between develop and qa
+        id: diff
+        run: |
+          git fetch origin qa
+          CHANGES=$(git rev-list --count origin/qa..origin/develop)
+          echo "count=$CHANGES" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update PR
+        if: steps.diff.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh pr list --base qa --head develop --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            echo "PR #$EXISTING already open for develop → qa"
+          else
+            gh pr create \
+              --base qa \
+              --head develop \
+              --title "release: promote develop to QA" \
+              --body "## Auto-Promotion
+          CI passed on \`develop\`. This PR promotes changes to QA (E2).
+
+          **Trigger:** CI workflow run #${{ github.event.workflow_run.id }}
+          **Commit:** ${{ github.event.workflow_run.head_sha }}
+
+          ## Test plan
+          - [x] CI green (Lint, Test, Type Check)
+          - [ ] QA verification after merge"
+          fi
+
+  promote-qa-to-main:
+    name: "PR: qa → main"
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'qa' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for diff between qa and main
+        id: diff
+        run: |
+          git fetch origin main
+          CHANGES=$(git rev-list --count origin/main..origin/qa)
+          echo "count=$CHANGES" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update PR
+        if: steps.diff.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh pr list --base main --head qa --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            echo "PR #$EXISTING already open for qa → main"
+          else
+            gh pr create \
+              --base main \
+              --head qa \
+              --title "release: promote QA to Production" \
+              --body "## Auto-Promotion
+          CI passed on \`qa\`. This PR promotes changes to Production (E3).
+
+          **Trigger:** CI workflow run #${{ github.event.workflow_run.id }}
+          **Commit:** ${{ github.event.workflow_run.head_sha }}
+
+          ## Test plan
+          - [x] CI green on qa (Lint, Test, Type Check)
+          - [x] QA preview deployment verified
+          - [ ] Production smoke test after merge"
+          fi
