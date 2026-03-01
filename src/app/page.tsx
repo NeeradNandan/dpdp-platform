@@ -224,7 +224,8 @@ export default function Home() {
           <div className="mt-16 grid gap-8 md:grid-cols-3">
             {/* Hook */}
             <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md">
-              <h3 className="text-xl font-semibold text-slate-900">Hook</h3>
+              <div className="h-7" aria-hidden="true" />
+              <h3 className="mt-4 text-xl font-semibold text-slate-900">Hook</h3>
               <p className="mt-4">
                 <span className="text-3xl font-bold text-slate-900">₹999</span>
                 <span className="text-slate-600">/mo</span>
@@ -249,8 +250,10 @@ export default function Home() {
 
             {/* Core */}
             <div className="flex flex-col rounded-2xl border-2 border-indigo-600 bg-white p-8 shadow-lg ring-2 ring-indigo-100">
-              <div className="w-fit rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
-                Most Popular
+              <div className="h-7">
+                <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
+                  Most Popular
+                </span>
               </div>
               <h3 className="mt-4 text-xl font-semibold text-slate-900">Core</h3>
               <p className="mt-4">
@@ -281,7 +284,8 @@ export default function Home() {
 
             {/* Scale */}
             <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md">
-              <h3 className="text-xl font-semibold text-slate-900">Scale</h3>
+              <div className="h-7" aria-hidden="true" />
+              <h3 className="mt-4 text-xl font-semibold text-slate-900">Scale</h3>
               <p className="mt-4">
                 <span className="text-3xl font-bold text-slate-900">₹50,000</span>
                 <span className="text-slate-600">/mo</span>
