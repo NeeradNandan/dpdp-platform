@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error("Signup error:", err);
+    console.error("Env check — URL set:", !!supabaseUrl, "AnonKey set:", !!supabaseAnonKey, "ServiceKey set:", !!serviceRoleKey, "AutoConfirm:", autoConfirm);
     return NextResponse.json(
       { error: "Internal server error." },
       { status: 500 }
