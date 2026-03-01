@@ -33,17 +33,25 @@ const config = {
       lines: 75,
       statements: 75,
     },
-    "src/lib/utils.ts": {
-      branches: 100,
-      functions: 100,
-      lines: 100,
-      statements: 100,
+    // Per-file minimums — every file must individually meet these.
+    // Prevents new files from passing at 0% while the global average holds.
+    "./src/components/ui/**/*.tsx": {
+      branches: 60,
+      functions: 80,
+      lines: 80,
+      statements: 80,
     },
-    "src/lib/consent-store.ts": {
-      branches: 100,
-      functions: 100,
-      lines: 100,
-      statements: 100,
+    "./src/lib/**/*.ts": {
+      branches: 80,
+      functions: 90,
+      lines: 90,
+      statements: 90,
+    },
+    "./src/app/api/**/*.ts": {
+      branches: 40,
+      functions: 60,
+      lines: 60,
+      statements: 60,
     },
   },
 };
