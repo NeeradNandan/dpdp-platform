@@ -1,12 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-const autoConfirm = process.env.AUTH_AUTO_CONFIRM === "true";
-
 export async function POST(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  const autoConfirm = process.env.AUTH_AUTO_CONFIRM === "true";
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error("Missing Supabase config — URL:", !!supabaseUrl, "AnonKey:", !!supabaseAnonKey, "ServiceKey:", !!serviceRoleKey);
+    return NextResponse.json(
+      { error: "Service configuration error. Please contact support." },
+      { status: 503 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { email, password, organizationName, gstin, industry, orgSize } = body;
