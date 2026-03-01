@@ -109,7 +109,14 @@ export default function SignupPage() {
         }),
       });
 
-      const data: SignupResponse = await res.json();
+      let data: SignupResponse;
+      try {
+        data = await res.json();
+      } catch {
+        setError("Unable to reach the server. Please check your connection and try again.");
+        setLoading(false);
+        return;
+      }
 
       if (!res.ok) {
         setError(data.error || "Sign up failed. Please try again.");
@@ -137,7 +144,7 @@ export default function SignupPage() {
       setSuccess(true);
       setLoading(false);
     } catch {
-      setError("An unexpected error occurred. Please try again.");
+      setError("Something went wrong. Please try again in a moment.");
       setLoading(false);
     }
   }
