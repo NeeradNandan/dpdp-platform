@@ -223,19 +223,19 @@ export default function Home() {
           </p>
           <div className="mt-16 grid gap-8 md:grid-cols-3">
             {/* Hook */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md">
+            <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md">
               <h3 className="text-xl font-semibold text-slate-900">Hook</h3>
               <p className="mt-4">
                 <span className="text-3xl font-bold text-slate-900">₹999</span>
                 <span className="text-slate-600">/mo</span>
               </p>
-              <ul className="mt-6 space-y-4">
+              <ul className="mt-6 flex-1 space-y-4">
                 <li className="flex items-center gap-2 text-slate-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-600" />
                   Consent Banner
                 </li>
                 <li className="flex items-center gap-2 text-slate-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-600" />
                   Policy Generator
                 </li>
               </ul>
@@ -248,8 +248,8 @@ export default function Home() {
             </div>
 
             {/* Core */}
-            <div className="rounded-2xl border-2 border-indigo-600 bg-white p-8 shadow-lg ring-2 ring-indigo-100">
-              <div className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
+            <div className="flex flex-col rounded-2xl border-2 border-indigo-600 bg-white p-8 shadow-lg ring-2 ring-indigo-100">
+              <div className="w-fit rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
                 Most Popular
               </div>
               <h3 className="mt-4 text-xl font-semibold text-slate-900">Core</h3>
@@ -257,17 +257,17 @@ export default function Home() {
                 <span className="text-3xl font-bold text-slate-900">₹15,000</span>
                 <span className="text-slate-600">/mo</span>
               </p>
-              <ul className="mt-6 space-y-4">
+              <ul className="mt-6 flex-1 space-y-4">
                 <li className="flex items-center gap-2 text-slate-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-600" />
                   Data Mapping Dashboard
                 </li>
                 <li className="flex items-center gap-2 text-slate-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-600" />
                   PII Discovery
                 </li>
                 <li className="flex items-center gap-2 text-slate-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-600" />
                   Consent Banner + Policy
                 </li>
               </ul>
@@ -280,23 +280,23 @@ export default function Home() {
             </div>
 
             {/* Scale */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md">
+            <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md">
               <h3 className="text-xl font-semibold text-slate-900">Scale</h3>
               <p className="mt-4">
                 <span className="text-3xl font-bold text-slate-900">₹50,000</span>
                 <span className="text-slate-600">/mo</span>
               </p>
-              <ul className="mt-6 space-y-4">
+              <ul className="mt-6 flex-1 space-y-4">
                 <li className="flex items-center gap-2 text-slate-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-600" />
                   AI Grievance Bot
                 </li>
                 <li className="flex items-center gap-2 text-slate-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-600" />
                   Full Automation
                 </li>
                 <li className="flex items-center gap-2 text-slate-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-600" />
                   Dedicated Support
                 </li>
               </ul>
