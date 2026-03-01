@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const autoConfirm = process.env.AUTH_AUTO_CONFIRM === "true";
 
@@ -24,19 +25,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createAdminClient(supabaseUrl, serviceRoleKey, {
+    const userMetadata = {
+      organization_name: organizationName,
+      gstin: gstin || null,
+      industry,
+      org_size: orgSize,
+    };
+
+    if (autoConfirm) {
+      const supabase = createAdminClient(supabaseUrl, serviceRoleKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+
+      const { data, error } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: userMetadata,
+      });
+
+      if (error) {
+        if (error.message?.includes("already been registered")) {
+          return NextResponse.json(
+            { error: "An account with this email already exists." },
+            { status: 409 }
+          );
+        }
+        return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+
+      return NextResponse.json({
+        message: "Account created successfully.",
+        autoConfirmed: true,
+        userId: data.user.id,
+      });
+    }
+
+    const origin =
+      request.headers.get("origin") ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
+
+    const supabase = createAdminClient(supabaseUrl, supabaseAnonKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const { data, error } = await supabase.auth.admin.createUser({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      email_confirm: autoConfirm,
-      user_metadata: {
-        organization_name: organizationName,
-        gstin: gstin || null,
-        industry,
-        org_size: orgSize,
+      options: {
+        data: userMetadata,
+        emailRedirectTo: `${origin}/api/auth/callback`,
       },
     });
 
@@ -50,32 +89,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    if (autoConfirm) {
-      return NextResponse.json({
-        message: "Account created successfully.",
-        autoConfirmed: true,
-        userId: data.user.id,
-      });
-    }
-
-    const origin =
-      request.headers.get("origin") ||
-      process.env.NEXT_PUBLIC_APP_URL ||
-      "http://localhost:3000";
-
-    const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
-      email,
-      { redirectTo: `${origin}/api/auth/callback` }
-    );
-
-    if (inviteError) {
-      console.error("Failed to send confirmation email:", inviteError.message);
-    }
-
     return NextResponse.json({
       message: "Account created. Please check your email to confirm.",
       autoConfirmed: false,
-      userId: data.user.id,
+      userId: data.user?.id,
     });
   } catch (err) {
     console.error("Signup error:", err);

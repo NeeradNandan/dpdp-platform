@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Shield } from "lucide-react";
 import { JsonLd } from "@/components/seo/json-ld";
+import { FaqAccordion } from "@/components/ui/faq-accordion";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://yojak.ai";
@@ -320,26 +321,17 @@ export default function Home() {
             Everything you need to know about DPDP Act compliance and how Yojak
             helps your business.
           </p>
-          <dl className="mt-12 space-y-6">
-            {(
+          <FaqAccordion
+            items={(
               faqSchema.mainEntity as Array<{
                 name: string;
                 acceptedAnswer: { text: string };
               }>
-            ).map((faq) => (
-              <div
-                key={faq.name}
-                className="rounded-xl border border-slate-200 bg-white p-6"
-              >
-                <dt className="text-base font-semibold text-slate-900">
-                  {faq.name}
-                </dt>
-                <dd className="mt-2 text-sm leading-relaxed text-slate-600">
-                  {faq.acceptedAnswer.text}
-                </dd>
-              </div>
-            ))}
-          </dl>
+            ).map((faq) => ({
+              question: faq.name,
+              answer: faq.acceptedAnswer.text,
+            }))}
+          />
         </div>
       </section>
 
